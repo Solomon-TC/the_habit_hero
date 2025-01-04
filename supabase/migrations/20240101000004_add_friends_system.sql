@@ -1,3 +1,35 @@
+-- Create profiles table first (since we need it for the trigger)
+CREATE TABLE IF NOT EXISTS profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    username TEXT UNIQUE,
+    display_name TEXT,
+    avatar_url TEXT,
+    bio TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+-- Create function and trigger for new user profile creation
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO profiles (id, username, display_name)
+    VALUES (
+        NEW.id,
+        LOWER(SPLIT_PART(NEW.email, '@', 1)), -- Use email prefix as default username
+        SPLIT_PART(NEW.email, '@', 1) -- Use email prefix as default display name
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger for new user profile creation
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION handle_new_user();
+
 -- Create friend requests table
 CREATE TABLE IF NOT EXISTS friend_requests (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -16,17 +48,6 @@ CREATE TABLE IF NOT EXISTS friends (
     friend_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
     UNIQUE (user_id, friend_id)
-);
-
--- Create profiles table for user information
-CREATE TABLE IF NOT EXISTS profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    username TEXT UNIQUE,
-    display_name TEXT,
-    avatar_url TEXT,
-    bio TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
 
 -- Create indexes for better query performance
@@ -149,23 +170,3 @@ CREATE TRIGGER update_profiles_updated_at
     BEFORE UPDATE ON profiles
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
-
--- Function to create profile on user signup
-CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-    INSERT INTO profiles (id, username, display_name)
-    VALUES (
-        NEW.id,
-        LOWER(SPLIT_PART(NEW.email, '@', 1)), -- Use email prefix as default username
-        SPLIT_PART(NEW.email, '@', 1) -- Use email prefix as default display name
-    );
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Create trigger for new user profile creation
-CREATE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW
-    EXECUTE FUNCTION handle_new_user();
