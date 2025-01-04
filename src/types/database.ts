@@ -1,3 +1,5 @@
+import { Character, CharacterAchievement } from './character';
+
 export interface Habit {
   id: string;
   user_id: string;
@@ -63,6 +65,16 @@ export interface Database {
         Row: GoalMilestone;
         Insert: Omit<GoalMilestone, 'id' | 'created_at' | 'completed_at'>;
         Update: Partial<Omit<GoalMilestone, 'id' | 'created_at'>>;
+      };
+      characters: {
+        Row: Character;
+        Insert: Omit<Character, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Character, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      character_achievements: {
+        Row: CharacterAchievement;
+        Insert: Omit<CharacterAchievement, 'id' | 'unlocked_at'>;
+        Update: Partial<Omit<CharacterAchievement, 'id' | 'unlocked_at'>>;
       };
     };
   };
