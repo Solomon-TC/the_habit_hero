@@ -9,11 +9,34 @@ CREATE TABLE IF NOT EXISTS profiles (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
 
+-- Enable Row Level Security
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for profiles table
+CREATE POLICY "Profiles are viewable by everyone"
+    ON profiles FOR SELECT
+    USING (true);
+
+CREATE POLICY "Users can insert their own profile"
+    ON profiles FOR INSERT
+    WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can update their own profile"
+    ON profiles FOR UPDATE
+    USING (auth.uid() = id);
+
+-- Grant necessary permissions to authenticated users
+GRANT USAGE ON SCHEMA public TO authenticated;
+GRANT ALL ON profiles TO authenticated;
+
 -- Create function and trigger for new user profile creation
 CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SECURITY DEFINER -- This ensures the function runs with elevated privileges
+SET search_path = public -- This ensures the function uses the public schema
+AS $$
 BEGIN
-    INSERT INTO profiles (id, username, display_name)
+    INSERT INTO public.profiles (id, username, display_name)
     VALUES (
         NEW.id,
         LOWER(SPLIT_PART(NEW.email, '@', 1)), -- Use email prefix as default username
@@ -57,10 +80,9 @@ CREATE INDEX IF NOT EXISTS friends_user_id_idx ON friends(user_id);
 CREATE INDEX IF NOT EXISTS friends_friend_id_idx ON friends(friend_id);
 CREATE INDEX IF NOT EXISTS profiles_username_idx ON profiles(username);
 
--- Enable Row Level Security
+-- Enable Row Level Security for other tables
 ALTER TABLE friend_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE friends ENABLE ROW LEVEL SECURITY;
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for friend_requests table
 CREATE POLICY "Users can view friend requests they're involved in"
@@ -93,22 +115,12 @@ CREATE POLICY "Users can remove friends"
     ON friends FOR DELETE
     USING (auth.uid() = user_id OR auth.uid() = friend_id);
 
--- Create policies for profiles table
-CREATE POLICY "Profiles are viewable by everyone"
-    ON profiles FOR SELECT
-    USING (true);
-
-CREATE POLICY "Users can insert their own profile"
-    ON profiles FOR INSERT
-    WITH CHECK (auth.uid() = id);
-
-CREATE POLICY "Users can update their own profile"
-    ON profiles FOR UPDATE
-    USING (auth.uid() = id);
-
 -- Function to handle friend request acceptance
 CREATE OR REPLACE FUNCTION handle_friend_request_acceptance()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SECURITY DEFINER -- This ensures the function runs with elevated privileges
+SET search_path = public -- This ensures the function uses the public schema
+AS $$
 BEGIN
     IF NEW.status = 'accepted' AND OLD.status = 'pending' THEN
         -- Create friendship records (bidirectional)
@@ -170,3 +182,9 @@ CREATE TRIGGER update_profiles_updated_at
     BEFORE UPDATE ON profiles
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+
+-- Grant permissions to public schema
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated;
