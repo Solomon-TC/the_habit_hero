@@ -1,3 +1,4 @@
+import { Profile, FriendRequest, Friend, FriendWithProfile, FriendRequestWithProfiles } from './friends';
 import { Character, CharacterAchievement } from './character';
 
 export interface Habit {
@@ -75,6 +76,29 @@ export interface Database {
         Row: CharacterAchievement;
         Insert: Omit<CharacterAchievement, 'id' | 'unlocked_at'>;
         Update: Partial<Omit<CharacterAchievement, 'id' | 'unlocked_at'>>;
+      };
+      profiles: {
+        Row: Profile;
+        Insert: Omit<Profile, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Profile, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      friend_requests: {
+        Row: FriendRequest;
+        Insert: Omit<FriendRequest, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<FriendRequest, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      friends: {
+        Row: Friend;
+        Insert: Omit<Friend, 'id' | 'created_at'>;
+        Update: Partial<Omit<Friend, 'id' | 'created_at'>>;
+      };
+    };
+    Views: {
+      friends_with_profiles: {
+        Row: FriendWithProfile;
+      };
+      friend_requests_with_profiles: {
+        Row: FriendRequestWithProfiles;
       };
     };
   };

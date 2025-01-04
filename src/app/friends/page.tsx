@@ -1,63 +1,69 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
+import { redirect } from 'next/navigation';
+import FriendsList from '../../components/FriendsList';
+import FriendRequests from '../../components/FriendRequests';
+import AddFriend from '../../components/AddFriend';
+import type { Database } from '../../types/database';
 
 export default function FriendsPage() {
-  const router = useRouter();
-  const supabase = createBrowserClient(
+  const [activeTab, setActiveTab] = useState<'friends' | 'requests' | 'add'>('friends');
+
+  const supabase = createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
+  // Check authentication
+  supabase.auth.getUser().then(({ data: { user } }) => {
+    if (!user) redirect('/auth');
+  });
+
+  const tabs = [
+    { id: 'friends', label: 'Friends' },
+    { id: 'requests', label: 'Friend Requests' },
+    { id: 'add', label: 'Add Friend' },
+  ] as const;
+
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white shadow rounded-lg p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Friends
-            </h1>
-            <button className="btn-primary">
-              Find Friends
-            </button>
-          </div>
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Friends</h1>
+          <p className="mt-2 text-gray-600">
+            Connect with other habit heroes and support each other&apos;s journeys
+          </p>
+        </div>
 
-          <div className="grid grid-cols-1 gap-6">
-            {/* Friend Requests Section */}
-            <div className="border-b pb-6">
-              <h2 className="text-lg font-semibold text-gray-700 mb-4">Friend Requests</h2>
-              <div className="bg-gray-100 p-8 rounded-lg flex flex-col items-center justify-center text-center">
-                <div className="text-gray-500">
-                  No pending friend requests
-                </div>
-              </div>
-            </div>
+        {/* Tabs */}
+        <div className="border-b border-gray-200 mb-8">
+          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`
+                  whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
+                  ${
+                    activeTab === tab.id
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }
+                `}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </div>
 
-            {/* Your Friends Section */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-700 mb-4">Your Friends</h2>
-              <div className="bg-gray-100 p-8 rounded-lg flex flex-col items-center justify-center text-center">
-                <div className="text-gray-500 mb-4">
-                  You haven't added any friends yet
-                </div>
-                <p className="text-sm text-gray-400 max-w-md">
-                  Connect with friends to share progress, celebrate achievements, 
-                  and keep each other accountable on your habit-building journey!
-                </p>
-              </div>
-            </div>
-
-            {/* Friend Activity Feed */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-700 mb-4">Friend Activity</h2>
-              <div className="bg-gray-100 p-8 rounded-lg flex flex-col items-center justify-center text-center">
-                <div className="text-gray-500">
-                  No recent friend activity
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Tab Content */}
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          {activeTab === 'friends' && <FriendsList />}
+          {activeTab === 'requests' && <FriendRequests />}
+          {activeTab === 'add' && <AddFriend />}
         </div>
       </div>
     </div>
