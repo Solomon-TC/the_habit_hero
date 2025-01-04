@@ -1,0 +1,10 @@
+{
+  "id": "uhmqsszvollkbxcspyqe",
+  "organization_id": "solomon-capells-projects",
+  "database": {
+    "host": "db.uhmqsszvollkbxcspyqe.supabase.co",
+    "name": "postgres",
+    "port": 5432,
+    "user": "postgres"
+  }
+}
