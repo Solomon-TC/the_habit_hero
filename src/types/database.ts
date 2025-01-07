@@ -25,6 +25,29 @@ export interface Friend {
   created_at: string;
 }
 
+export interface Goal {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  target_date: string;
+  status: 'not_started' | 'in_progress' | 'completed' | 'archived';
+  progress: number;
+  created_at: string;
+  completed_at: string | null;
+}
+
+export interface GoalMilestone {
+  id: string;
+  goal_id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  completed: boolean;
+  created_at: string;
+  completed_at: string | null;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -42,6 +65,21 @@ export interface Database {
         Row: Friend;
         Insert: Omit<Friend, 'id' | 'created_at'>;
         Update: Partial<Omit<Friend, 'id' | 'created_at'>>;
+      };
+      goals: {
+        Row: Goal;
+        Insert: Omit<Goal, 'id' | 'created_at' | 'completed_at' | 'progress'>;
+        Update: Partial<Omit<Goal, 'id' | 'created_at'>>;
+      };
+      goal_milestones: {
+        Row: GoalMilestone;
+        Insert: Omit<GoalMilestone, 'id' | 'created_at' | 'completed_at'>;
+        Update: Partial<Omit<GoalMilestone, 'id' | 'created_at'>>;
+      };
+    };
+    Views: {
+      friends_with_profiles: {
+        Row: Friend & Omit<Profile, 'id'>;
       };
     };
   };

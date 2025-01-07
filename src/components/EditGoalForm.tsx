@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '../types/database';
-import type { Goal, GoalMilestone } from '../types/database';
+import type { GoalWithMilestones } from '../types/goals';
 
 type Props = {
-  goal: Goal & { milestones: GoalMilestone[] };
+  goal: GoalWithMilestones;
   onClose: () => void;
   onGoalUpdated: () => void;
 };
