@@ -48,6 +48,27 @@ export interface GoalMilestone {
   completed_at: string | null;
 }
 
+export interface FriendWithProfile extends Friend {
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
+  friend_code: string;
+  bio: string | null;
+}
+
+export interface FriendRequestWithProfiles extends FriendRequest {
+  sender_username: string;
+  sender_display_name: string;
+  sender_avatar_url: string | null;
+  sender_friend_code: string;
+  sender_bio: string | null;
+  receiver_username: string;
+  receiver_display_name: string;
+  receiver_avatar_url: string | null;
+  receiver_friend_code: string;
+  receiver_bio: string | null;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -79,7 +100,10 @@ export interface Database {
     };
     Views: {
       friends_with_profiles: {
-        Row: Friend & Omit<Profile, 'id'>;
+        Row: FriendWithProfile;
+      };
+      friend_requests_with_profiles: {
+        Row: FriendRequestWithProfiles;
       };
     };
   };
