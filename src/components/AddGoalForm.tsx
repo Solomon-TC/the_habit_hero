@@ -3,9 +3,15 @@
 import { useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '../types/database';
+import type { Goal } from '../types/goals';
 
 type Props = {
   onGoalAdded: () => void;
+};
+
+type NewMilestone = {
+  name: string;
+  description?: string;
 };
 
 export default function AddGoalForm({ onGoalAdded }: Props) {
@@ -16,7 +22,7 @@ export default function AddGoalForm({ onGoalAdded }: Props) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [targetDate, setTargetDate] = useState('');
-  const [milestones, setMilestones] = useState<{ name: string; description?: string }[]>([]);
+  const [milestones, setMilestones] = useState<NewMilestone[]>([]);
   const [newMilestoneName, setNewMilestoneName] = useState('');
   const [newMilestoneDescription, setNewMilestoneDescription] = useState('');
 

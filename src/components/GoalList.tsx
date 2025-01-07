@@ -3,12 +3,8 @@
 import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '../types/database';
-import type { Goal, GoalMilestone } from '../types/database';
+import type { GoalWithMilestones } from '../types/goals';
 import EditGoalForm from './EditGoalForm';
-
-type GoalWithMilestones = Goal & {
-  milestones: GoalMilestone[];
-};
 
 export default function GoalList() {
   const [goals, setGoals] = useState<GoalWithMilestones[]>([]);
@@ -61,7 +57,7 @@ export default function GoalList() {
     fetchGoals();
   }, []);
 
-  const toggleMilestone = async (goalId: string, milestone: GoalMilestone) => {
+  const toggleMilestone = async (goalId: string, milestone: GoalWithMilestones['milestones'][0]) => {
     try {
       const { error: updateError } = await supabase
         .from('goal_milestones')
