@@ -3,48 +3,55 @@ CREATE TABLE IF NOT EXISTS profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     username TEXT UNIQUE,
     display_name TEXT,
+    friend_code TEXT UNIQUE,  -- Added friend_code field
     avatar_url TEXT,
     bio TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
 
--- Enable Row Level Security
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-
--- Create policies for profiles table
-CREATE POLICY "Profiles are viewable by everyone"
-    ON profiles FOR SELECT
-    USING (true);
-
-CREATE POLICY "Users can insert their own profile"
-    ON profiles FOR INSERT
-    WITH CHECK (auth.uid() = id);
-
-CREATE POLICY "Users can update their own profile"
-    ON profiles FOR UPDATE
-    USING (auth.uid() = id);
-
--- Grant necessary permissions to authenticated users
-GRANT USAGE ON SCHEMA public TO authenticated;
-GRANT ALL ON profiles TO authenticated;
+-- Create function to generate random friend code
+CREATE OR REPLACE FUNCTION generate_friend_code()
+RETURNS TEXT AS $$
+DECLARE
+    chars TEXT := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    result TEXT := '';
+    i INTEGER;
+BEGIN
+    -- Generate an 8-character code (e.g., 'HB4K9XY2')
+    FOR i IN 1..8 LOOP
+        result := result || substr(chars, floor(random() * length(chars) + 1)::integer, 1);
+    END LOOP;
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql;
 
 -- Create function and trigger for new user profile creation
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER
-SECURITY DEFINER -- This ensures the function runs with elevated privileges
-SET search_path = public -- This ensures the function uses the public schema
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
 AS $$
+DECLARE
+    new_friend_code TEXT;
 BEGIN
-    INSERT INTO public.profiles (id, username, display_name)
+    -- Generate a unique friend code
+    LOOP
+        new_friend_code := generate_friend_code();
+        EXIT WHEN NOT EXISTS (SELECT 1 FROM profiles WHERE friend_code = new_friend_code);
+    END LOOP;
+
+    INSERT INTO public.profiles (id, username, display_name, friend_code)
     VALUES (
         NEW.id,
         LOWER(SPLIT_PART(NEW.email, '@', 1)), -- Use email prefix as default username
-        SPLIT_PART(NEW.email, '@', 1) -- Use email prefix as default display name
+        SPLIT_PART(NEW.email, '@', 1), -- Use email prefix as default display name
+        new_friend_code
     );
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Create trigger for new user profile creation
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
@@ -79,10 +86,12 @@ CREATE INDEX IF NOT EXISTS friend_requests_receiver_id_idx ON friend_requests(re
 CREATE INDEX IF NOT EXISTS friends_user_id_idx ON friends(user_id);
 CREATE INDEX IF NOT EXISTS friends_friend_id_idx ON friends(friend_id);
 CREATE INDEX IF NOT EXISTS profiles_username_idx ON profiles(username);
+CREATE INDEX IF NOT EXISTS profiles_friend_code_idx ON profiles(friend_code);
 
--- Enable Row Level Security for other tables
+-- Enable Row Level Security
 ALTER TABLE friend_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE friends ENABLE ROW LEVEL SECURITY;
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for friend_requests table
 CREATE POLICY "Users can view friend requests they're involved in"
@@ -115,11 +124,24 @@ CREATE POLICY "Users can remove friends"
     ON friends FOR DELETE
     USING (auth.uid() = user_id OR auth.uid() = friend_id);
 
+-- Create policies for profiles table
+CREATE POLICY "Profiles are viewable by everyone"
+    ON profiles FOR SELECT
+    USING (true);
+
+CREATE POLICY "Users can insert their own profile"
+    ON profiles FOR INSERT
+    WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can update their own profile"
+    ON profiles FOR UPDATE
+    USING (auth.uid() = id);
+
 -- Function to handle friend request acceptance
 CREATE OR REPLACE FUNCTION handle_friend_request_acceptance()
 RETURNS TRIGGER
-SECURITY DEFINER -- This ensures the function runs with elevated privileges
-SET search_path = public -- This ensures the function uses the public schema
+SECURITY DEFINER
+SET search_path = public
 AS $$
 BEGIN
     IF NEW.status = 'accepted' AND OLD.status = 'pending' THEN
@@ -184,7 +206,7 @@ CREATE TRIGGER update_profiles_updated_at
     EXECUTE FUNCTION update_updated_at_column();
 
 -- Grant permissions to public schema
-GRANT USAGE ON SCHEMA public TO anon, authenticated;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
-GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated;
+GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO postgres, anon, authenticated, service_role;

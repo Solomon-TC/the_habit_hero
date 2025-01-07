@@ -1,86 +1,37 @@
-import { Profile, FriendRequest, Friend, FriendWithProfile, FriendRequestWithProfiles } from './friends';
-import { Character, CharacterAchievement } from './character';
-
-export interface Habit {
+export interface Profile {
   id: string;
-  user_id: string;
-  name: string;
-  description?: string;
-  frequency: 'daily' | 'weekly';
-  target_days: number;
-  reminder_time?: string;
+  username: string;
+  display_name: string;
+  friend_code: string;
+  avatar_url: string | null;
+  bio: string | null;
   created_at: string;
-  archived: boolean;
+  updated_at: string;
 }
 
-export interface HabitCompletion {
+export interface FriendRequest {
   id: string;
-  habit_id: string;
-  user_id: string;
-  completed_at: string;
-  date: string;
+  sender_id: string;
+  receiver_id: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  created_at: string;
+  updated_at: string;
 }
 
-export interface Goal {
+export interface Friend {
   id: string;
   user_id: string;
-  name: string;
-  description?: string;
-  target_date: string;
-  status: 'not_started' | 'in_progress' | 'completed' | 'archived';
-  progress: number;
+  friend_id: string;
   created_at: string;
-  completed_at?: string;
-}
-
-export interface GoalMilestone {
-  id: string;
-  goal_id: string;
-  user_id: string;
-  name: string;
-  description?: string;
-  completed: boolean;
-  created_at: string;
-  completed_at?: string;
 }
 
 export interface Database {
   public: {
     Tables: {
-      habits: {
-        Row: Habit;
-        Insert: Omit<Habit, 'id' | 'created_at'>;
-        Update: Partial<Omit<Habit, 'id' | 'created_at'>>;
-      };
-      habit_completions: {
-        Row: HabitCompletion;
-        Insert: Omit<HabitCompletion, 'id'>;
-        Update: Partial<Omit<HabitCompletion, 'id'>>;
-      };
-      goals: {
-        Row: Goal;
-        Insert: Omit<Goal, 'id' | 'created_at' | 'completed_at'>;
-        Update: Partial<Omit<Goal, 'id' | 'created_at'>>;
-      };
-      goal_milestones: {
-        Row: GoalMilestone;
-        Insert: Omit<GoalMilestone, 'id' | 'created_at' | 'completed_at'>;
-        Update: Partial<Omit<GoalMilestone, 'id' | 'created_at'>>;
-      };
-      characters: {
-        Row: Character;
-        Insert: Omit<Character, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Character, 'id' | 'created_at' | 'updated_at'>>;
-      };
-      character_achievements: {
-        Row: CharacterAchievement;
-        Insert: Omit<CharacterAchievement, 'id' | 'unlocked_at'>;
-        Update: Partial<Omit<CharacterAchievement, 'id' | 'unlocked_at'>>;
-      };
       profiles: {
         Row: Profile;
-        Insert: Omit<Profile, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Profile, 'id' | 'created_at' | 'updated_at'>>;
+        Insert: Partial<Profile>;
+        Update: Partial<Profile>;
       };
       friend_requests: {
         Row: FriendRequest;
@@ -91,14 +42,6 @@ export interface Database {
         Row: Friend;
         Insert: Omit<Friend, 'id' | 'created_at'>;
         Update: Partial<Omit<Friend, 'id' | 'created_at'>>;
-      };
-    };
-    Views: {
-      friends_with_profiles: {
-        Row: FriendWithProfile;
-      };
-      friend_requests_with_profiles: {
-        Row: FriendRequestWithProfiles;
       };
     };
   };

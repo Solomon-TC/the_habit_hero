@@ -1,179 +1,173 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import type { Database } from '../types/database';
-import type { Profile } from '../types/friends';
-import { useDebounce } from 'use-debounce';
+import { Database } from '../types/database';
 
 export default function AddFriend() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedQuery] = useDebounce(searchQuery, 300);
-  const [searchResults, setSearchResults] = useState<Profile[]>([]);
+  const [friendCode, setFriendCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pendingRequests, setPendingRequests] = useState<Set<string>>(new Set());
+  const [success, setSuccess] = useState<string | null>(null);
+  const [myFriendCode, setMyFriendCode] = useState<string | null>(null);
 
   const supabase = createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const searchUsers = useCallback(async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
+  // Fetch current user's friend code on component mount
+  const fetchMyFriendCode = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('friend_code')
+      .eq('id', user.id)
+      .single();
+
+    if (profile) {
+      setMyFriendCode(profile.friend_code);
+    }
+  };
+
+  useEffect(() => {
+    fetchMyFriendCode();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoading(true);
     setError(null);
+    setSuccess(null);
 
     try {
+      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Search by username or display name
-      const { data: profiles, error: searchError } = await supabase
+      // Find user by friend code
+      const { data: foundUser, error: searchError } = await supabase
         .from('profiles')
-        .select('*')
-        .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
-        .neq('id', user.id) // Exclude current user
-        .limit(5);
+        .select('id, display_name')
+        .eq('friend_code', friendCode.toUpperCase())
+        .single();
 
-      if (searchError) throw searchError;
+      if (searchError || !foundUser) {
+        throw new Error('User not found');
+      }
 
-      // Filter out users who are already friends
-      const { data: friends, error: friendsError } = await supabase
-        .from('friends')
-        .select('friend_id')
-        .eq('user_id', user.id);
+      if (foundUser.id === user.id) {
+        throw new Error('You cannot add yourself as a friend');
+      }
 
-      if (friendsError) throw friendsError;
-
-      const friendIds = new Set(friends?.map(f => f.friend_id));
-      const filteredProfiles = profiles.filter(p => !friendIds.has(p.id));
-
-      // Get pending friend requests
-      const { data: requests, error: requestsError } = await supabase
+      // Check if friend request already exists
+      const { data: existingRequest } = await supabase
         .from('friend_requests')
-        .select('receiver_id')
-        .eq('sender_id', user.id)
-        .eq('status', 'pending');
+        .select('status')
+        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+        .or(`sender_id.eq.${foundUser.id},receiver_id.eq.${foundUser.id}`)
+        .single();
 
-      if (requestsError) throw requestsError;
+      if (existingRequest) {
+        if (existingRequest.status === 'pending') {
+          throw new Error('A friend request already exists between you and this user');
+        } else if (existingRequest.status === 'accepted') {
+          throw new Error('You are already friends with this user');
+        }
+      }
 
-      const pendingIds = new Set(requests?.map(r => r.receiver_id));
-      setPendingRequests(pendingIds);
-
-      setSearchResults(filteredProfiles);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to search users');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [supabase]);
-
-  const handleSendRequest = async (receiverId: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
+      // Send friend request
       const { error: requestError } = await supabase
         .from('friend_requests')
         .insert({
           sender_id: user.id,
-          receiver_id: receiverId,
+          receiver_id: foundUser.id,
           status: 'pending'
         });
 
       if (requestError) throw requestError;
 
-      setPendingRequests(prev => new Set([...prev, receiverId]));
+      setSuccess(`Friend request sent to ${foundUser.display_name}`);
+      setFriendCode('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send friend request');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Search when debounced query changes
-  useCallback(() => {
-    searchUsers(debouncedQuery);
-  }, [debouncedQuery, searchUsers]);
-
   return (
     <div className="space-y-6">
-      <div>
-        <label htmlFor="search" className="block text-sm font-medium text-gray-700">
-          Search Users
-        </label>
-        <div className="mt-1">
-          <input
-            type="text"
-            id="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by username or display name"
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-          />
-        </div>
-      </div>
-
-      {error && (
-        <div className="bg-red-100 text-red-700 p-4 rounded-lg">
-          {error}
+      {myFriendCode && (
+        <div className="bg-white p-4 rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-2">Your Friend Code</h3>
+          <div className="flex items-center space-x-2">
+            <code className="bg-gray-100 px-3 py-1 rounded text-lg font-mono">
+              {myFriendCode}
+            </code>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(myFriendCode);
+                setSuccess('Friend code copied to clipboard!');
+                setTimeout(() => setSuccess(null), 3000);
+              }}
+              className="text-primary hover:text-primary/80"
+            >
+              Copy
+            </button>
+          </div>
+          <p className="text-sm text-gray-600 mt-2">
+            Share this code with friends so they can add you
+          </p>
         </div>
       )}
 
-      <div className="space-y-4">
-        {isLoading ? (
-          <div className="text-center py-4">
-            <div className="text-gray-500">Searching...</div>
+      <div className="bg-white p-4 rounded-lg shadow">
+        <h3 className="text-lg font-semibold mb-4">Add Friend</h3>
+        
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md text-sm">
+            {error}
           </div>
-        ) : searchResults.length > 0 ? (
-          searchResults.map(profile => (
-            <div
-              key={profile.id}
-              className="bg-white rounded-lg shadow p-4 flex items-center justify-between"
-            >
-              <div className="flex items-center space-x-4">
-                {profile.avatar_url ? (
-                  <img
-                    src={profile.avatar_url}
-                    alt={profile.display_name}
-                    className="w-12 h-12 rounded-full"
-                  />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-primary text-lg font-semibold">
-                      {profile.display_name[0].toUpperCase()}
-                    </span>
-                  </div>
-                )}
-                <div>
-                  <h4 className="font-semibold text-gray-900">
-                    {profile.display_name}
-                  </h4>
-                  <p className="text-sm text-gray-500">@{profile.username}</p>
-                </div>
-              </div>
+        )}
 
-              <button
-                onClick={() => handleSendRequest(profile.id)}
-                disabled={pendingRequests.has(profile.id)}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  pendingRequests.has(profile.id)
-                    ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                    : 'bg-primary text-white hover:bg-primary/90'
-                }`}
-              >
-                {pendingRequests.has(profile.id) ? 'Request Sent' : 'Add Friend'}
-              </button>
-            </div>
-          ))
-        ) : searchQuery && !isLoading ? (
-          <div className="text-center py-4">
-            <div className="text-gray-500">No users found</div>
+        {success && (
+          <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md text-sm">
+            {success}
           </div>
-        ) : null}
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="friendCode" className="block text-sm font-medium text-gray-700">
+              Friend Code
+            </label>
+            <input
+              id="friendCode"
+              type="text"
+              value={friendCode}
+              onChange={(e) => setFriendCode(e.target.value)}
+              placeholder="Enter friend code (e.g., ABC123XY)"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+              required
+              pattern="[A-Za-z0-9]{8}"
+              title="Friend code must be 8 characters long and contain only letters and numbers"
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              Enter your friend's 8-character code to send them a friend request
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'Sending...' : 'Send Friend Request'}
+          </button>
+        </form>
       </div>
     </div>
   );
