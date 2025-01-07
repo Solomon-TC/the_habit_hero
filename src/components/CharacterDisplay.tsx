@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '../types/database';
-import type { Character, CharacterAchievement } from '../types/character';
+import type { Character, CharacterAchievement } from '../types/database';
 
 type Props = {
   userId: string;
