@@ -69,6 +69,21 @@ CREATE TABLE IF NOT EXISTS friends (
     UNIQUE (user_id, friend_id)
 );
 
+-- Create friends_with_profiles view
+CREATE OR REPLACE VIEW friends_with_profiles AS
+SELECT 
+    f.id,
+    f.user_id,
+    f.friend_id,
+    f.created_at,
+    p.username,
+    p.display_name,
+    p.avatar_url,
+    p.friend_code,
+    p.bio
+FROM friends f
+JOIN profiles p ON f.friend_id = p.id;
+
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS friend_requests_sender_id_idx ON friend_requests(sender_id);
 CREATE INDEX IF NOT EXISTS friend_requests_receiver_id_idx ON friend_requests(receiver_id);

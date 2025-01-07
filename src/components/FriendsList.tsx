@@ -89,24 +89,25 @@ export default function FriendsList() {
           className="bg-white rounded-lg shadow p-4 flex items-center justify-between"
         >
           <div className="flex items-center space-x-4">
-            {friend.profiles.avatar_url ? (
+            {friend.avatar_url ? (
               <img
-                src={friend.profiles.avatar_url}
-                alt={friend.profiles.display_name}
+                src={friend.avatar_url}
+                alt={friend.display_name}
                 className="w-12 h-12 rounded-full"
               />
             ) : (
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <span className="text-primary text-lg font-semibold">
-                  {friend.profiles.display_name[0].toUpperCase()}
+                  {friend.display_name[0].toUpperCase()}
                 </span>
               </div>
             )}
             <div>
               <h3 className="font-semibold text-gray-900">
-                {friend.profiles.display_name}
+                {friend.display_name}
               </h3>
-              <p className="text-sm text-gray-500">@{friend.profiles.username}</p>
+              <p className="text-sm text-gray-500">@{friend.username}</p>
+              <p className="text-xs text-gray-400">Friend Code: {friend.friend_code}</p>
             </div>
           </div>
 

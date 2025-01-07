@@ -1,34 +1,22 @@
-export interface Profile {
-  id: string;
-  username: string;
-  display_name: string;
-  avatar_url?: string;
-  bio?: string;
-  created_at: string;
-  updated_at: string;
-}
+import { Database } from './database';
 
-export interface FriendRequest {
-  id: string;
-  sender_id: string;
-  receiver_id: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  created_at: string;
-  updated_at: string;
-}
+export type Profile = Database['public']['Tables']['profiles']['Row'];
+export type FriendRequest = Database['public']['Tables']['friend_requests']['Row'];
+export type Friend = Database['public']['Tables']['friends']['Row'];
 
-export interface Friend {
+export interface FriendWithProfile extends Omit<Friend, 'id'> {
   id: string;
   user_id: string;
   friend_id: string;
   created_at: string;
-}
-
-export interface FriendWithProfile extends Friend {
-  profiles: Profile;  // Friend's profile
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
+  friend_code: string;
+  bio: string | null;
 }
 
 export interface FriendRequestWithProfiles extends FriendRequest {
-  sender: Profile;
-  receiver: Profile;
+  sender_profile: Profile;
+  receiver_profile: Profile;
 }
