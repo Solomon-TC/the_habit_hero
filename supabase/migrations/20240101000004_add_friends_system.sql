@@ -84,6 +84,29 @@ SELECT
 FROM friends f
 JOIN profiles p ON f.friend_id = p.id;
 
+-- Create friend_requests_with_profiles view
+CREATE OR REPLACE VIEW friend_requests_with_profiles AS
+SELECT 
+    fr.id,
+    fr.sender_id,
+    fr.receiver_id,
+    fr.status,
+    fr.created_at,
+    fr.updated_at,
+    sp.username as sender_username,
+    sp.display_name as sender_display_name,
+    sp.avatar_url as sender_avatar_url,
+    sp.friend_code as sender_friend_code,
+    sp.bio as sender_bio,
+    rp.username as receiver_username,
+    rp.display_name as receiver_display_name,
+    rp.avatar_url as receiver_avatar_url,
+    rp.friend_code as receiver_friend_code,
+    rp.bio as receiver_bio
+FROM friend_requests fr
+JOIN profiles sp ON fr.sender_id = sp.id
+JOIN profiles rp ON fr.receiver_id = rp.id;
+
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS friend_requests_sender_id_idx ON friend_requests(sender_id);
 CREATE INDEX IF NOT EXISTS friend_requests_receiver_id_idx ON friend_requests(receiver_id);

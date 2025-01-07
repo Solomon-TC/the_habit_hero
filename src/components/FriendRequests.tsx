@@ -114,24 +114,24 @@ export default function FriendRequests() {
                 className="bg-white rounded-lg shadow p-4 flex items-center justify-between"
               >
                 <div className="flex items-center space-x-4">
-                  {request.sender.avatar_url ? (
+                  {request.sender_avatar_url ? (
                     <img
-                      src={request.sender.avatar_url}
-                      alt={request.sender.display_name}
+                      src={request.sender_avatar_url}
+                      alt={request.sender_display_name}
                       className="w-12 h-12 rounded-full"
                     />
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                       <span className="text-primary text-lg font-semibold">
-                        {request.sender.display_name[0].toUpperCase()}
+                        {request.sender_display_name[0].toUpperCase()}
                       </span>
                     </div>
                   )}
                   <div>
                     <h4 className="font-semibold text-gray-900">
-                      {request.sender.display_name}
+                      {request.sender_display_name}
                     </h4>
-                    <p className="text-sm text-gray-500">@{request.sender.username}</p>
+                    <p className="text-sm text-gray-500">@{request.sender_username}</p>
                   </div>
                 </div>
 
@@ -170,24 +170,24 @@ export default function FriendRequests() {
                 className="bg-white rounded-lg shadow p-4 flex items-center justify-between"
               >
                 <div className="flex items-center space-x-4">
-                  {request.receiver.avatar_url ? (
+                  {request.receiver_avatar_url ? (
                     <img
-                      src={request.receiver.avatar_url}
-                      alt={request.receiver.display_name}
+                      src={request.receiver_avatar_url}
+                      alt={request.receiver_display_name}
                       className="w-12 h-12 rounded-full"
                     />
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                       <span className="text-primary text-lg font-semibold">
-                        {request.receiver.display_name[0].toUpperCase()}
+                        {request.receiver_display_name[0].toUpperCase()}
                       </span>
                     </div>
                   )}
                   <div>
                     <h4 className="font-semibold text-gray-900">
-                      {request.receiver.display_name}
+                      {request.receiver_display_name}
                     </h4>
-                    <p className="text-sm text-gray-500">@{request.receiver.username}</p>
+                    <p className="text-sm text-gray-500">@{request.receiver_username}</p>
                   </div>
                 </div>
 
