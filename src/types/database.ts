@@ -48,6 +48,34 @@ export interface GoalMilestone {
   completed_at: string | null;
 }
 
+export interface Character {
+  id: string;
+  user_id: string;
+  name: string;
+  level: number;
+  experience: number;
+  next_level_exp: number;
+  color_primary: string;
+  color_secondary: string;
+  color_accent: string;
+  habits_completed: number;
+  goals_completed: number;
+  current_streak: number;
+  longest_streak: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CharacterAchievement {
+  id: string;
+  character_id: string;
+  user_id: string;
+  type: 'habit_streak' | 'goal_completion' | 'level_up' | 'milestone';
+  name: string;
+  description: string | null;
+  unlocked_at: string;
+}
+
 export interface FriendWithProfile extends Friend {
   username: string;
   display_name: string;
@@ -96,6 +124,16 @@ export interface Database {
         Row: GoalMilestone;
         Insert: Omit<GoalMilestone, 'id' | 'created_at' | 'completed_at'>;
         Update: Partial<Omit<GoalMilestone, 'id' | 'created_at'>>;
+      };
+      characters: {
+        Row: Character;
+        Insert: Omit<Character, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Character, 'id' | 'created_at'>>;
+      };
+      character_achievements: {
+        Row: CharacterAchievement;
+        Insert: Omit<CharacterAchievement, 'id' | 'unlocked_at'>;
+        Update: Partial<Omit<CharacterAchievement, 'id' | 'unlocked_at'>>;
       };
     };
     Views: {
