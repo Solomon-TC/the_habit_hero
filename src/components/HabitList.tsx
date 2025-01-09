@@ -33,7 +33,7 @@ export default function HabitList() {
       const { data: habitsData, error: habitsError } = await supabase
         .from('habits')
         .select('*')
-        .eq('archived', false)
+        .is('archived_at', null)
         .order('created_at', { ascending: false });
 
       if (habitsError) throw habitsError;
@@ -42,7 +42,8 @@ export default function HabitList() {
       const { data: completionsData, error: completionsError } = await supabase
         .from('habit_completions')
         .select('*')
-        .eq('date', today)
+        .gte('completed_at', today)
+        .lt('completed_at', new Date(today).getTime() + 24 * 60 * 60 * 1000)
         .in('habit_id', habitsData.map(h => h.id));
 
       if (completionsError) throw completionsError;
@@ -70,8 +71,10 @@ export default function HabitList() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      const today = new Date().toISOString().split('T')[0];
-      const isCompleted = habit.completions.some(c => c.date === today);
+      const today = new Date().toISOString();
+      const isCompleted = habit.completions.some(c => 
+        new Date(c.completed_at).toISOString().split('T')[0] === today.split('T')[0]
+      );
 
       if (isCompleted) {
         // Remove completion
@@ -79,7 +82,8 @@ export default function HabitList() {
           .from('habit_completions')
           .delete()
           .eq('habit_id', habit.id)
-          .eq('date', today);
+          .gte('completed_at', today.split('T')[0])
+          .lt('completed_at', new Date(today).getTime() + 24 * 60 * 60 * 1000);
 
         if (error) throw error;
       } else {
@@ -89,7 +93,7 @@ export default function HabitList() {
           .insert({
             habit_id: habit.id,
             user_id: user.id,
-            date: today
+            completed_at: today
           });
 
         if (error) throw error;
@@ -144,7 +148,9 @@ export default function HabitList() {
                   <p className="text-sm text-gray-500 mt-1">{habit.description}</p>
                 )}
                 <div className="text-xs text-gray-400 mt-1">
-                  {habit.frequency === 'daily' ? 'Daily' : `${habit.target_days} days per week`}
+                  {habit.frequency === 'daily' ? 'Daily' : 
+                   habit.frequency === 'weekly' ? `${habit.target_days.length} days per week` :
+                   `${habit.target_days.length} days per month`}
                 </div>
               </div>
               <button

@@ -49,6 +49,29 @@ export interface GoalMilestone {
   completed_at: string | null;
 }
 
+export interface Habit {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  target_days: number[];
+  reminder_time: string | null;
+  color: string;
+  icon: string | null;
+  created_at: string;
+  updated_at: string;
+  archived_at: string | null;
+}
+
+export interface HabitCompletion {
+  id: string;
+  habit_id: string;
+  user_id: string;
+  completed_at: string;
+  created_at: string;
+}
+
 export interface Character {
   id: string;
   user_id: string;
@@ -127,6 +150,16 @@ export interface Database {
         Row: GoalMilestone;
         Insert: Omit<GoalMilestone, 'id' | 'created_at' | 'completed_at'>;
         Update: Partial<Omit<GoalMilestone, 'id' | 'created_at'>>;
+      };
+      habits: {
+        Row: Habit;
+        Insert: Omit<Habit, 'id' | 'created_at' | 'updated_at' | 'archived_at'>;
+        Update: Partial<Omit<Habit, 'id' | 'created_at'>>;
+      };
+      habit_completions: {
+        Row: HabitCompletion;
+        Insert: Omit<HabitCompletion, 'id' | 'created_at'>;
+        Update: Partial<Omit<HabitCompletion, 'id' | 'created_at'>>;
       };
       characters: {
         Row: Character;

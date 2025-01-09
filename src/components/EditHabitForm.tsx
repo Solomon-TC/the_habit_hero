@@ -17,8 +17,8 @@ export default function EditHabitForm({ habit, onClose, onHabitUpdated }: Props)
 
   const [name, setName] = useState(habit.name);
   const [description, setDescription] = useState(habit.description || '');
-  const [frequency, setFrequency] = useState<'daily' | 'weekly'>(habit.frequency);
-  const [targetDays, setTargetDays] = useState(habit.target_days);
+  const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly'>(habit.frequency);
+  const [targetDays, setTargetDays] = useState<number[]>(habit.target_days);
   const [reminderTime, setReminderTime] = useState(habit.reminder_time || '');
 
   const supabase = createBrowserClient<Database>(
@@ -52,6 +52,62 @@ export default function EditHabitForm({ habit, onClose, onHabitUpdated }: Props)
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getMaxTargetDays = () => {
+    switch (frequency) {
+      case 'daily':
+        return 1;
+      case 'weekly':
+        return 7;
+      case 'monthly':
+        return 31;
+      default:
+        return 1;
+    }
+  };
+
+  const handleDayToggle = (day: number) => {
+    if (targetDays.includes(day)) {
+      setTargetDays(targetDays.filter(d => d !== day));
+    } else {
+      setTargetDays([...targetDays, day].sort((a, b) => a - b));
+    }
+  };
+
+  const getDayLabel = (day: number) => {
+    if (frequency === 'weekly') {
+      return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day];
+    }
+    return day.toString();
+  };
+
+  const renderDaySelectors = () => {
+    const maxDays = getMaxTargetDays();
+    const days = Array.from({ length: maxDays }, (_, i) => i + 1);
+
+    if (frequency === 'daily') {
+      return null;
+    }
+
+    return (
+      <div className="mt-2 flex flex-wrap gap-2">
+        {days.map(day => (
+          <button
+            key={day}
+            type="button"
+            onClick={() => handleDayToggle(day)}
+            className={`px-3 py-1 rounded-full text-sm ${
+              targetDays.includes(day)
+                ? 'bg-primary text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {getDayLabel(day - 1)}
+          </button>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -104,37 +160,35 @@ export default function EditHabitForm({ habit, onClose, onHabitUpdated }: Props)
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="frequency" className="block text-sm font-medium text-gray-700">
-                  Frequency *
-                </label>
-                <select
-                  id="frequency"
-                  value={frequency}
-                  onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly')}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                >
-                  <option value="daily">Daily</option>
-                  <option value="weekly">Weekly</option>
-                </select>
-              </div>
+            <div>
+              <label htmlFor="frequency" className="block text-sm font-medium text-gray-700">
+                Frequency *
+              </label>
+              <select
+                id="frequency"
+                value={frequency}
+                onChange={(e) => {
+                  const newFreq = e.target.value as typeof frequency;
+                  setFrequency(newFreq);
+                  // Reset target days when frequency changes
+                  setTargetDays(newFreq === 'daily' ? [1] : []);
+                }}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+              >
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
 
-              <div>
-                <label htmlFor="targetDays" className="block text-sm font-medium text-gray-700">
-                  Target Days {frequency === 'weekly' ? 'per Week' : ''}*
-                </label>
-                <input
-                  type="number"
-                  id="targetDays"
-                  value={targetDays}
-                  onChange={(e) => setTargetDays(parseInt(e.target.value))}
-                  min={1}
-                  max={frequency === 'weekly' ? 7 : 1}
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Target Days {frequency !== 'daily' ? `(Select ${frequency === 'weekly' ? 'days of the week' : 'dates'})` : ''}*
+              </label>
+              {renderDaySelectors()}
+              {targetDays.length === 0 && frequency !== 'daily' && (
+                <p className="mt-1 text-sm text-red-500">Please select at least one day</p>
+              )}
             </div>
 
             <div>
@@ -162,7 +216,7 @@ export default function EditHabitForm({ habit, onClose, onHabitUpdated }: Props)
               <button
                 type="submit"
                 className="btn-primary"
-                disabled={isLoading}
+                disabled={isLoading || (frequency !== 'daily' && targetDays.length === 0)}
               >
                 {isLoading ? 'Saving...' : 'Save Changes'}
               </button>
