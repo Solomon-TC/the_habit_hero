@@ -22,26 +22,23 @@ export default function FriendRequests() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
 
-        // Fetch incoming requests
-        const { data: incomingData, error: incomingError } = await supabase
-          .from('friend_requests_with_profiles')
-          .select('*')
-          .eq('receiver_id', user.id)
-          .eq('status', 'pending');
+        const { data: requestsData, error: requestsError } = await supabase
+          .rpc('get_friend_requests_with_profiles', { user_id_input: user.id });
 
-        if (incomingError) throw incomingError;
-        setIncomingRequests(incomingData);
+        if (requestsError) throw requestsError;
 
-        // Fetch outgoing requests
-        const { data: outgoingData, error: outgoingError } = await supabase
-          .from('friend_requests_with_profiles')
-          .select('*')
-          .eq('sender_id', user.id)
-          .eq('status', 'pending');
+        // Split requests into incoming and outgoing
+        const incoming = requestsData.filter((r: FriendRequestWithProfiles) => 
+          r.receiver_id === user.id && r.status === 'pending'
+        );
+        const outgoing = requestsData.filter((r: FriendRequestWithProfiles) => 
+          r.sender_id === user.id && r.status === 'pending'
+        );
 
-        if (outgoingError) throw outgoingError;
-        setOutgoingRequests(outgoingData);
+        setIncomingRequests(incoming);
+        setOutgoingRequests(outgoing);
       } catch (err) {
+        console.error('Error fetching friend requests:', err);
         setError(err instanceof Error ? err.message : 'Failed to load friend requests');
       } finally {
         setIsLoading(false);

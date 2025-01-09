@@ -74,6 +74,8 @@ CREATE POLICY "Users can remove friends"
 -- Drop existing function and trigger if they exist
 DROP TRIGGER IF EXISTS friend_request_accepted ON friend_requests;
 DROP FUNCTION IF EXISTS handle_friend_request_acceptance();
+DROP FUNCTION IF EXISTS get_friends_with_profiles(uuid);
+DROP FUNCTION IF EXISTS get_friend_requests_with_profiles(uuid);
 
 -- Create function to handle friend request acceptance
 CREATE OR REPLACE FUNCTION handle_friend_request_acceptance()
@@ -96,3 +98,96 @@ CREATE TRIGGER friend_request_accepted
     AFTER UPDATE ON friend_requests
     FOR EACH ROW
     EXECUTE FUNCTION handle_friend_request_acceptance();
+
+-- Create secure function to get friends with profiles
+CREATE OR REPLACE FUNCTION get_friends_with_profiles(user_id_input UUID)
+RETURNS TABLE (
+    id UUID,
+    user_id UUID,
+    friend_id UUID,
+    created_at TIMESTAMPTZ,
+    username TEXT,
+    display_name TEXT,
+    avatar_url TEXT,
+    friend_code TEXT,
+    bio TEXT
+) SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Check if the requesting user matches the input user_id
+    IF auth.uid() != user_id_input THEN
+        RAISE EXCEPTION 'Not authorized';
+    END IF;
+
+    RETURN QUERY
+    SELECT 
+        f.id,
+        f.user_id,
+        f.friend_id,
+        f.created_at,
+        p.username,
+        p.display_name,
+        p.avatar_url,
+        p.friend_code,
+        p.bio
+    FROM friends f
+    JOIN profiles p ON f.friend_id = p.id
+    WHERE f.user_id = user_id_input;
+END;
+$$;
+
+-- Create secure function to get friend requests with profiles
+CREATE OR REPLACE FUNCTION get_friend_requests_with_profiles(user_id_input UUID)
+RETURNS TABLE (
+    id UUID,
+    sender_id UUID,
+    receiver_id UUID,
+    status TEXT,
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ,
+    sender_username TEXT,
+    sender_display_name TEXT,
+    sender_avatar_url TEXT,
+    sender_friend_code TEXT,
+    sender_bio TEXT,
+    receiver_username TEXT,
+    receiver_display_name TEXT,
+    receiver_avatar_url TEXT,
+    receiver_friend_code TEXT,
+    receiver_bio TEXT
+) SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Check if the requesting user matches the input user_id
+    IF auth.uid() != user_id_input THEN
+        RAISE EXCEPTION 'Not authorized';
+    END IF;
+
+    RETURN QUERY
+    SELECT 
+        fr.id,
+        fr.sender_id,
+        fr.receiver_id,
+        fr.status,
+        fr.created_at,
+        fr.updated_at,
+        sp.username AS sender_username,
+        sp.display_name AS sender_display_name,
+        sp.avatar_url AS sender_avatar_url,
+        sp.friend_code AS sender_friend_code,
+        sp.bio AS sender_bio,
+        rp.username AS receiver_username,
+        rp.display_name AS receiver_display_name,
+        rp.avatar_url AS receiver_avatar_url,
+        rp.friend_code AS receiver_friend_code,
+        rp.bio AS receiver_bio
+    FROM friend_requests fr
+    JOIN profiles sp ON fr.sender_id = sp.id
+    JOIN profiles rp ON fr.receiver_id = rp.id
+    WHERE fr.sender_id = user_id_input OR fr.receiver_id = user_id_input;
+END;
+$$;

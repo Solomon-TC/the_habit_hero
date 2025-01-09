@@ -23,13 +23,12 @@ export default function FriendsList() {
         if (!user) throw new Error('Not authenticated');
 
         const { data: friendsData, error: friendsError } = await supabase
-          .from('friends_with_profiles')
-          .select('*')
-          .eq('user_id', user.id);
+          .rpc('get_friends_with_profiles', { user_id_input: user.id });
 
         if (friendsError) throw friendsError;
         setFriends(friendsData);
       } catch (err) {
+        console.error('Error fetching friends:', err);
         setError(err instanceof Error ? err.message : 'Failed to load friends');
       } finally {
         setIsLoading(false);
