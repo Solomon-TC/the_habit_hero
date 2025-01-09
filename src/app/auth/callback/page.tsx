@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
+import { nanoid } from 'nanoid';
 
 const SITE_URL = 'https://www.thehabithero.com';
 
@@ -21,6 +22,37 @@ export default function AuthCallbackPage() {
         const { error } = await supabase.auth.exchangeCodeForSession(window.location.search);
         if (error) {
           throw error;
+        }
+
+        // Get the user
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+        if (!user) throw new Error('No user found');
+
+        // Check if profile exists
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError && profileError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+          throw profileError;
+        }
+
+        // If no profile exists, create one
+        if (!profile) {
+          const username = user.email?.split('@')[0] || `user_${nanoid(6)}`;
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              username: username,
+              display_name: username,
+              friend_code: nanoid(8).toUpperCase(),
+            });
+
+          if (insertError) throw insertError;
         }
 
         // Redirect to dashboard on successful auth

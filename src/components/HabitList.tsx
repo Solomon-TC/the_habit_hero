@@ -33,6 +33,7 @@ export default function HabitList() {
       const { data: habitsData, error: habitsError } = await supabase
         .from('habits')
         .select('*')
+        .eq('user_id', user.id)  // Add this line to filter by user_id
         .is('archived_at', null)
         .order('created_at', { ascending: false });
 
@@ -42,8 +43,8 @@ export default function HabitList() {
       const { data: completionsData, error: completionsError } = await supabase
         .from('habit_completions')
         .select('*')
-        .gte('completed_at', today)
-        .lt('completed_at', new Date(today).getTime() + 24 * 60 * 60 * 1000)
+        .eq('user_id', user.id)  // Add this line to filter by user_id
+        .eq('completion_date', today)  // Use completion_date instead of completed_at range
         .in('habit_id', habitsData.map(h => h.id));
 
       if (completionsError) throw completionsError;
@@ -56,6 +57,7 @@ export default function HabitList() {
 
       setHabits(habitsWithCompletions);
     } catch (err) {
+      console.error('Error fetching habits:', err);  // Add this line for debugging
       setError(err instanceof Error ? err.message : 'Failed to fetch habits');
     } finally {
       setIsLoading(false);
@@ -72,9 +74,8 @@ export default function HabitList() {
       if (!user) throw new Error('User not authenticated');
 
       const today = new Date().toISOString();
-      const isCompleted = habit.completions.some(c => 
-        new Date(c.completed_at).toISOString().split('T')[0] === today.split('T')[0]
-      );
+      const todayDate = today.split('T')[0];
+      const isCompleted = habit.completions.some(c => c.completion_date === todayDate);
 
       if (isCompleted) {
         // Remove completion
@@ -82,8 +83,8 @@ export default function HabitList() {
           .from('habit_completions')
           .delete()
           .eq('habit_id', habit.id)
-          .gte('completed_at', today.split('T')[0])
-          .lt('completed_at', new Date(today).getTime() + 24 * 60 * 60 * 1000);
+          .eq('user_id', user.id)
+          .eq('completion_date', todayDate);
 
         if (error) throw error;
       } else {
@@ -93,7 +94,8 @@ export default function HabitList() {
           .insert({
             habit_id: habit.id,
             user_id: user.id,
-            completed_at: today
+            completed_at: today,
+            completion_date: todayDate  // Add this line
           });
 
         if (error) throw error;
@@ -102,6 +104,7 @@ export default function HabitList() {
       // Refresh habits
       await fetchHabits();
     } catch (err) {
+      console.error('Error toggling habit:', err);  // Add this line for debugging
       setError(err instanceof Error ? err.message : 'Failed to update habit');
     }
   };

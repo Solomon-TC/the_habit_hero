@@ -57,10 +57,7 @@ export interface Habit {
   frequency: 'daily' | 'weekly' | 'monthly';
   target_days: number[];
   reminder_time: string | null;
-  color: string;
-  icon: string | null;
   created_at: string;
-  updated_at: string;
   archived_at: string | null;
 }
 
@@ -69,7 +66,7 @@ export interface HabitCompletion {
   habit_id: string;
   user_id: string;
   completed_at: string;
-  created_at: string;
+  completion_date: string;
 }
 
 export interface Character {
@@ -153,13 +150,13 @@ export interface Database {
       };
       habits: {
         Row: Habit;
-        Insert: Omit<Habit, 'id' | 'created_at' | 'updated_at' | 'archived_at'>;
+        Insert: Omit<Habit, 'id' | 'created_at' | 'archived_at'>;
         Update: Partial<Omit<Habit, 'id' | 'created_at'>>;
       };
       habit_completions: {
         Row: HabitCompletion;
-        Insert: Omit<HabitCompletion, 'id' | 'created_at'>;
-        Update: Partial<Omit<HabitCompletion, 'id' | 'created_at'>>;
+        Insert: Omit<HabitCompletion, 'id' | 'completion_date'>;
+        Update: Partial<Omit<HabitCompletion, 'id' | 'completion_date'>>;
       };
       characters: {
         Row: Character;
