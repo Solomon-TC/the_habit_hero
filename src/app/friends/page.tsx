@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import FriendsList from '../../components/FriendsList';
 import FriendRequests from '../../components/FriendRequests';
 import AddFriend from '../../components/AddFriend';
+import FriendCode from '../../components/FriendCode';
 import type { Database } from '../../types/database';
 
 export default function FriendsPage() {
@@ -36,6 +37,9 @@ export default function FriendsPage() {
             Connect with other habit heroes and support each other&apos;s journeys
           </p>
         </div>
+
+        {/* Friend Code */}
+        <FriendCode />
 
         {/* Tabs */}
         <div className="border-b border-gray-200 mb-8">
