@@ -8,12 +8,14 @@ import HabitList from '../../components/HabitList';
 import GoalList from '../../components/GoalList';
 import CharacterDisplay from '../../components/CharacterDisplay';
 import DateDisplay from '../../components/DateDisplay';
+import HabitStats from '../../components/HabitStats';
 import type { Database } from '../../types/database';
 
 export default function DashboardPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [hasCharacter, setHasCharacter] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const supabase = createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -64,14 +66,22 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="mt-2 text-gray-600">
-              Track your daily progress and achievements
-            </p>
+        {/* Header Section */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+              <p className="mt-2 text-gray-600">
+                Track your daily progress and achievements
+              </p>
+            </div>
+            <DateDisplay />
           </div>
-          <DateDisplay />
+
+          {/* Stats Overview */}
+          <div className="mt-6">
+            <HabitStats key={refreshKey} />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -100,26 +110,40 @@ export default function DashboardPage() {
             {/* Today's Habits */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Today's Habits</h2>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Today's Habits</h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {new Date().toLocaleDateString('en-US', { 
+                      weekday: 'long',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </div>
                 <Link
                   href="/habits"
                   className="text-primary hover:text-primary/80 text-sm"
                 >
-                  View All →
+                  Manage Habits →
                 </Link>
               </div>
-              <HabitList />
+              <HabitList key={refreshKey} />
             </div>
 
             {/* Active Goals */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Active Goals</h2>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Active Goals</h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Track your long-term progress
+                  </p>
+                </div>
                 <Link
                   href="/goals"
                   className="text-primary hover:text-primary/80 text-sm"
                 >
-                  View All →
+                  Manage Goals →
                 </Link>
               </div>
               <GoalList />
