@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '../types/database';
 import type { Character, CharacterAchievement } from '../types/database';
+import { calculateExpPercentage, formatStreak, getLevelDescription } from '../utils/character';
 
 type Props = {
   userId: string;
@@ -71,7 +72,8 @@ export default function CharacterDisplay({ userId, showAchievements = true }: Pr
     );
   }
 
-  const expPercentage = (character.experience / character.next_level_exp) * 100;
+  const expPercentage = calculateExpPercentage(character);
+  const levelTitle = getLevelDescription(character.level);
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
@@ -93,7 +95,9 @@ export default function CharacterDisplay({ userId, showAchievements = true }: Pr
         {/* Character Info */}
         <div className="text-center text-white">
           <h2 className="text-2xl font-bold mb-1">{character.name}</h2>
-          <div className="text-sm opacity-90">Level {character.level}</div>
+          <div className="text-sm opacity-90">
+            Level {character.level} • {levelTitle}
+          </div>
         </div>
 
         {/* Experience Bar */}
@@ -122,11 +126,11 @@ export default function CharacterDisplay({ userId, showAchievements = true }: Pr
           <div className="text-sm text-gray-500">Goals Completed</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-gray-900">{character.current_streak}</div>
+          <div className="text-2xl font-bold text-gray-900">{formatStreak(character.current_streak)}</div>
           <div className="text-sm text-gray-500">Current Streak</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-gray-900">{character.longest_streak}</div>
+          <div className="text-2xl font-bold text-gray-900">{formatStreak(character.longest_streak)}</div>
           <div className="text-sm text-gray-500">Longest Streak</div>
         </div>
       </div>
