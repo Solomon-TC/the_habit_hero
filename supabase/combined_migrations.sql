@@ -12,3 +12,6 @@
 
 -- Friends Schema (20240101000004)
 \ir migrations/20240101000004_friends_schema.sql
+
+-- Update Profiles (20240101000005)
+\ir migrations/20240101000005_update_profiles.sql
