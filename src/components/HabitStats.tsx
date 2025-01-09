@@ -3,6 +3,11 @@
 import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '../types/database';
+import type { Habit, HabitCompletion } from '../types/database';
+
+type HabitWithCompletions = Habit & {
+  completions: HabitCompletion[];
+};
 
 export default function HabitStats() {
   const [stats, setStats] = useState({
@@ -25,54 +30,92 @@ export default function HabitStats() {
 
         const today = new Date().toISOString().split('T')[0];
 
-        // Get total active habits
+        // Get active habits with their completions
         const { data: habits, error: habitsError } = await supabase
           .from('habits')
-          .select('id')
-          .eq('archived', false);
+          .select('*, completions:habit_completions(*)')
+          .is('archived_at', null);
 
         if (habitsError) throw habitsError;
 
-        // Get today's completions
-        const { data: completions, error: completionsError } = await supabase
-          .from('habit_completions')
-          .select('*')
-          .eq('date', today);
+        // Calculate completions for today based on habit frequency
+        let completedToday = 0;
+        const habitsWithCompletions = habits as HabitWithCompletions[];
 
-        if (completionsError) throw completionsError;
+        habitsWithCompletions.forEach(habit => {
+          const todayCompletions = habit.completions.filter(c => 
+            new Date(c.completed_at).toISOString().split('T')[0] === today
+          );
 
-        // Calculate streak (simplified version - just counting consecutive days)
-        const { data: streakData, error: streakError } = await supabase
-          .from('habit_completions')
-          .select('date')
-          .order('date', { ascending: false })
-          .limit(30); // Look at last 30 days max
+          // For daily habits, any completion today counts
+          if (habit.frequency === 'daily' && todayCompletions.length > 0) {
+            completedToday++;
+          }
+          // For weekly habits, check if the target days for this week are completed
+          else if (habit.frequency === 'weekly') {
+            const currentDay = new Date().getDay() + 1; // 1-7 (Sunday = 1)
+            if (habit.target_days.includes(currentDay) && todayCompletions.length > 0) {
+              completedToday++;
+            }
+          }
+          // For monthly habits, check if the target days for this month are completed
+          else if (habit.frequency === 'monthly') {
+            const currentDate = new Date().getDate(); // 1-31
+            if (habit.target_days.includes(currentDate) && todayCompletions.length > 0) {
+              completedToday++;
+            }
+          }
+        });
 
-        if (streakError) throw streakError;
-
+        // Calculate streak
         let streak = 0;
-        if (streakData && streakData.length > 0) {
-          const dates = streakData.map(d => new Date(d.date).toISOString().split('T')[0]);
-          dates.sort((a, b) => b.localeCompare(a)); // Sort descending
+        const now = new Date();
+        let currentDate = new Date(now);
+        currentDate.setHours(0, 0, 0, 0);
 
-          let currentDate = new Date();
-          for (const date of dates) {
-            const expectedDate = new Date(currentDate);
-            expectedDate.setDate(currentDate.getDate() - streak);
-            const expectedDateStr = expectedDate.toISOString().split('T')[0];
+        while (true) {
+          const dateStr = currentDate.toISOString().split('T')[0];
+          let allHabitsCompletedForDate = true;
 
-            if (date === expectedDateStr) {
-              streak++;
-              currentDate = new Date(date);
-            } else {
+          // Check each habit's completions for this date
+          for (const habit of habitsWithCompletions) {
+            const dateCompletions = habit.completions.filter(c => 
+              new Date(c.completed_at).toISOString().split('T')[0] === dateStr
+            );
+
+            // Check if this habit needed to be completed on this date
+            let neededCompletion = false;
+            if (habit.frequency === 'daily') {
+              neededCompletion = true;
+            } else if (habit.frequency === 'weekly') {
+              const dayOfWeek = currentDate.getDay() + 1; // 1-7 (Sunday = 1)
+              neededCompletion = habit.target_days.includes(dayOfWeek);
+            } else if (habit.frequency === 'monthly') {
+              const dayOfMonth = currentDate.getDate(); // 1-31
+              neededCompletion = habit.target_days.includes(dayOfMonth);
+            }
+
+            // If the habit needed completion but wasn't completed, break the streak
+            if (neededCompletion && dateCompletions.length === 0) {
+              allHabitsCompletedForDate = false;
               break;
             }
           }
+
+          if (!allHabitsCompletedForDate) {
+            break;
+          }
+
+          streak++;
+          currentDate.setDate(currentDate.getDate() - 1);
+
+          // Limit streak calculation to last 365 days
+          if (streak >= 365) break;
         }
 
         setStats({
-          totalHabits: habits?.length || 0,
-          completedToday: completions?.length || 0,
+          totalHabits: habitsWithCompletions.length,
+          completedToday,
           currentStreak: streak,
         });
       } catch (error) {
