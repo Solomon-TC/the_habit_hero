@@ -1,3 +1,4 @@
+// Base types for database tables
 export interface Profile {
   id: string;
   username: string;
@@ -76,6 +77,7 @@ export interface CharacterAchievement {
   unlocked_at: string;
 }
 
+// Extended types for views
 export interface FriendWithProfile extends Friend {
   username: string;
   display_name: string;
@@ -97,6 +99,7 @@ export interface FriendRequestWithProfiles extends FriendRequest {
   receiver_bio: string | null;
 }
 
+// Database type for Supabase
 export interface Database {
   public: {
     Tables: {

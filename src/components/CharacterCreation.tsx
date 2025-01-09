@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '../types/database';
+import type { Character, CharacterAchievement } from '../types/database';
 import { DEFAULT_CHARACTER_COLORS } from '../types/character';
 
 type Props = {
@@ -31,40 +32,47 @@ export default function CharacterCreation({ onCharacterCreated }: Props) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      const newCharacter: Database['public']['Tables']['characters']['Insert'] = {
+        user_id: user.id,
+        name,
+        color_primary: colorPrimary,
+        color_secondary: colorSecondary,
+        color_accent: colorAccent,
+        level: 1,
+        experience: 0,
+        next_level_exp: 100,
+        habits_completed: 0,
+        goals_completed: 0,
+        current_streak: 0,
+        longest_streak: 0,
+      };
+
       const { error: createError } = await supabase
         .from('characters')
-        .insert({
-          user_id: user.id,
-          name,
-          color_primary: colorPrimary,
-          color_secondary: colorSecondary,
-          color_accent: colorAccent,
-          level: 1,
-          experience: 0,
-          next_level_exp: 100,
-          habits_completed: 0,
-          goals_completed: 0,
-          current_streak: 0,
-          longest_streak: 0,
-        });
+        .insert(newCharacter);
 
       if (createError) throw createError;
 
       // Create first achievement
+      const { data: characterData } = await supabase
+        .from('characters')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!characterData) throw new Error('Failed to get character ID');
+
+      const newAchievement: Database['public']['Tables']['character_achievements']['Insert'] = {
+        user_id: user.id,
+        character_id: characterData.id,
+        type: 'milestone',
+        name: 'Character Created',
+        description: 'Started your journey of self-improvement',
+      };
+
       const { error: achievementError } = await supabase
         .from('character_achievements')
-        .insert({
-          user_id: user.id,
-          character_id: (await supabase
-            .from('characters')
-            .select('id')
-            .eq('user_id', user.id)
-            .single()
-          ).data!.id,
-          type: 'milestone',
-          name: 'Character Created',
-          description: 'Started your journey of self-improvement',
-        });
+        .insert(newAchievement);
 
       if (achievementError) throw achievementError;
 
