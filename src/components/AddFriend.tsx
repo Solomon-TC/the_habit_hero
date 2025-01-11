@@ -21,29 +21,68 @@ export default function AddFriend() {
   const fetchMyFriendCode = async () => {
     try {
       setDebugInfo('Fetching user...');
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        setDebugInfo(`User error: ${userError.message}`);
+        return;
+      }
       if (!user) {
         setDebugInfo('No user found');
         return;
       }
 
       setDebugInfo(`User found: ${user.id}. Fetching profile...`);
-      const { data: profile, error: profileError } = await supabase
+      
+      // First, check if multiple profiles exist
+      const { data: profiles, error: countError } = await supabase
         .from('profiles')
         .select('friend_code')
-        .eq('id', user.id)
-        .single();
+        .eq('id', user.id);
 
-      if (profileError) {
-        setDebugInfo(`Profile error: ${profileError.message}`);
+      if (countError) {
+        setDebugInfo(`Count error: ${countError.message}`);
         return;
       }
 
-      if (profile) {
-        setDebugInfo(`Profile found with friend code: ${profile.friend_code}`);
-        setMyFriendCode(profile.friend_code);
+      if (!profiles || profiles.length === 0) {
+        setDebugInfo('No profile found. Creating new profile...');
+        // Create a new profile
+        const username = user.email?.split('@')[0] || `user_${Math.random().toString(36).substring(7)}`;
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            username: username,
+            display_name: username
+          });
+
+        if (insertError) {
+          setDebugInfo(`Insert error: ${insertError.message}`);
+          return;
+        }
+
+        // Fetch the newly created profile
+        const { data: newProfile, error: newProfileError } = await supabase
+          .from('profiles')
+          .select('friend_code')
+          .eq('id', user.id)
+          .single();
+
+        if (newProfileError) {
+          setDebugInfo(`New profile error: ${newProfileError.message}`);
+          return;
+        }
+
+        if (newProfile) {
+          setDebugInfo(`New profile created with friend code: ${newProfile.friend_code}`);
+          setMyFriendCode(newProfile.friend_code);
+        }
+      } else if (profiles.length > 1) {
+        setDebugInfo(`Multiple profiles found (${profiles.length}). Using first one.`);
+        setMyFriendCode(profiles[0].friend_code);
       } else {
-        setDebugInfo('No profile found');
+        setDebugInfo(`Profile found with friend code: ${profiles[0].friend_code}`);
+        setMyFriendCode(profiles[0].friend_code);
       }
     } catch (err) {
       setDebugInfo(`Error: ${err instanceof Error ? err.message : String(err)}`);
