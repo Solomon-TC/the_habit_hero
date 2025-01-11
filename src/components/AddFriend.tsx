@@ -10,6 +10,7 @@ export default function AddFriend() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [myFriendCode, setMyFriendCode] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string>('');
 
   const supabase = createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,17 +19,34 @@ export default function AddFriend() {
 
   // Fetch current user's friend code on component mount
   const fetchMyFriendCode = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      setDebugInfo('Fetching user...');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setDebugInfo('No user found');
+        return;
+      }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('friend_code')
-      .eq('id', user.id)
-      .single();
+      setDebugInfo(`User found: ${user.id}. Fetching profile...`);
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('friend_code')
+        .eq('id', user.id)
+        .single();
 
-    if (profile) {
-      setMyFriendCode(profile.friend_code);
+      if (profileError) {
+        setDebugInfo(`Profile error: ${profileError.message}`);
+        return;
+      }
+
+      if (profile) {
+        setDebugInfo(`Profile found with friend code: ${profile.friend_code}`);
+        setMyFriendCode(profile.friend_code);
+      } else {
+        setDebugInfo('No profile found');
+      }
+    } catch (err) {
+      setDebugInfo(`Error: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
@@ -100,6 +118,12 @@ export default function AddFriend() {
 
   return (
     <div className="space-y-6">
+      {/* Debug Info */}
+      <div className="bg-gray-100 p-4 rounded-lg text-sm font-mono">
+        <p>Debug Info:</p>
+        <pre>{debugInfo}</pre>
+      </div>
+
       {myFriendCode && (
         <div className="bg-white p-4 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-2">Your Friend Code</h3>

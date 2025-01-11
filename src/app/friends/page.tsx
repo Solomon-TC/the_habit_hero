@@ -6,11 +6,10 @@ import { redirect } from 'next/navigation';
 import FriendsList from '../../components/FriendsList';
 import FriendRequests from '../../components/FriendRequests';
 import AddFriend from '../../components/AddFriend';
-import FriendCode from '../../components/FriendCode';
 import type { Database } from '../../types/database';
 
 export default function FriendsPage() {
-  const [activeTab, setActiveTab] = useState<'friends' | 'requests' | 'add'>('friends');
+  const [activeTab, setActiveTab] = useState<'friends' | 'requests' | 'add'>('add');
 
   const supabase = createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,9 +22,9 @@ export default function FriendsPage() {
   });
 
   const tabs = [
+    { id: 'add', label: 'Add Friend' },
     { id: 'friends', label: 'Friends' },
     { id: 'requests', label: 'Friend Requests' },
-    { id: 'add', label: 'Add Friend' },
   ] as const;
 
   return (
@@ -37,9 +36,6 @@ export default function FriendsPage() {
             Connect with other habit heroes and support each other&apos;s journeys
           </p>
         </div>
-
-        {/* Friend Code */}
-        <FriendCode />
 
         {/* Tabs */}
         <div className="border-b border-gray-200 mb-8">

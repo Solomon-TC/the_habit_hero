@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
 import { nanoid } from 'nanoid';
 
-const SITE_URL = 'https://www.thehabithero.com';
-
 export default function AuthCallbackPage() {
   const router = useRouter();
 
@@ -55,17 +53,16 @@ export default function AuthCallbackPage() {
           if (insertError) throw insertError;
         }
 
-        // Redirect to dashboard on successful auth
-        window.location.href = `${SITE_URL}/dashboard`;
+        // Use router.push instead of window.location for client-side navigation
+        router.push('/dashboard');
       } catch (error) {
         console.error('Error during auth callback:', error);
-        // Redirect to auth page on error
-        window.location.href = `${SITE_URL}/auth`;
+        router.push('/auth');
       }
     };
 
     handleAuthCallback();
-  }, []);
+  }, [router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

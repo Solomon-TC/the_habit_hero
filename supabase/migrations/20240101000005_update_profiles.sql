@@ -1,8 +1,6 @@
--- Function to generate a random friend code
+-- Create function to generate random friend code
 CREATE OR REPLACE FUNCTION generate_friend_code()
-RETURNS TEXT
-LANGUAGE plpgsql
-AS $$
+RETURNS TEXT AS $$
 DECLARE
     chars TEXT := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     result TEXT := '';
@@ -13,34 +11,62 @@ BEGIN
     END LOOP;
     RETURN result;
 END;
-$$;
+$$ LANGUAGE plpgsql;
 
--- Update existing profiles with friend codes if they don't have one
+-- Create trigger function to set friend code if not provided
+CREATE OR REPLACE FUNCTION set_friend_code()
+RETURNS TRIGGER AS $$
+DECLARE
+    new_code TEXT;
+    code_exists BOOLEAN;
+BEGIN
+    IF NEW.friend_code IS NULL THEN
+        LOOP
+            new_code := generate_friend_code();
+            
+            -- Check if code already exists
+            SELECT EXISTS (
+                SELECT 1 FROM profiles WHERE friend_code = new_code
+            ) INTO code_exists;
+            
+            -- Exit loop if unique code found
+            EXIT WHEN NOT code_exists;
+        END LOOP;
+        
+        NEW.friend_code := new_code;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger to automatically set friend code
+DROP TRIGGER IF EXISTS ensure_friend_code ON profiles;
+CREATE TRIGGER ensure_friend_code
+    BEFORE INSERT ON profiles
+    FOR EACH ROW
+    EXECUTE FUNCTION set_friend_code();
+
+-- Update existing profiles without friend codes
 DO $$
 DECLARE
     profile_record RECORD;
+    new_code TEXT;
+    code_exists BOOLEAN;
 BEGIN
-    FOR profile_record IN 
-        SELECT id 
-        FROM profiles 
-        WHERE friend_code IS NULL OR friend_code = ''
-    LOOP
-        -- Keep trying until we get a unique friend code
-        WHILE TRUE LOOP
-            BEGIN
-                UPDATE profiles 
-                SET friend_code = generate_friend_code()
-                WHERE id = profile_record.id;
-                EXIT; -- If we get here, the update succeeded
-            EXCEPTION WHEN unique_violation THEN
-                -- If we get a duplicate, the loop will try again
-                CONTINUE;
-            END;
+    FOR profile_record IN SELECT id FROM profiles WHERE friend_code IS NULL LOOP
+        LOOP
+            new_code := generate_friend_code();
+            
+            -- Check if code already exists
+            SELECT EXISTS (
+                SELECT 1 FROM profiles WHERE friend_code = new_code
+            ) INTO code_exists;
+            
+            -- Exit loop if unique code found
+            EXIT WHEN NOT code_exists;
         END LOOP;
+        
+        UPDATE profiles SET friend_code = new_code WHERE id = profile_record.id;
     END LOOP;
 END;
-$$;
-
--- Make friend_code NOT NULL after ensuring all profiles have one
-ALTER TABLE profiles 
-    ALTER COLUMN friend_code SET NOT NULL;
+$$ LANGUAGE plpgsql;
