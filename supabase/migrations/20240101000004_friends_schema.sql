@@ -112,7 +112,7 @@ CREATE TRIGGER friend_request_accepted
     FOR EACH ROW
     EXECUTE FUNCTION handle_friend_request_acceptance();
 
--- Create secure function to get friends with profiles
+-- Create secure function to get friends with profiles and characters
 CREATE OR REPLACE FUNCTION get_friends_with_profiles(user_id_input UUID)
 RETURNS TABLE (
     id UUID,
@@ -123,7 +123,18 @@ RETURNS TABLE (
     display_name TEXT,
     avatar_url TEXT,
     friend_code TEXT,
-    bio TEXT
+    bio TEXT,
+    character_name TEXT,
+    character_level INTEGER,
+    character_experience INTEGER,
+    character_next_level_exp INTEGER,
+    character_color_primary TEXT,
+    character_color_secondary TEXT,
+    character_color_accent TEXT,
+    character_habits_completed INTEGER,
+    character_goals_completed INTEGER,
+    character_current_streak INTEGER,
+    character_longest_streak INTEGER
 ) SECURITY DEFINER
 SET search_path = public
 LANGUAGE plpgsql
@@ -144,9 +155,21 @@ BEGIN
         p.display_name,
         p.avatar_url,
         p.friend_code,
-        p.bio
+        p.bio,
+        c.name AS character_name,
+        c.level AS character_level,
+        c.experience AS character_experience,
+        c.next_level_exp AS character_next_level_exp,
+        c.color_primary AS character_color_primary,
+        c.color_secondary AS character_color_secondary,
+        c.color_accent AS character_color_accent,
+        c.habits_completed AS character_habits_completed,
+        c.goals_completed AS character_goals_completed,
+        c.current_streak AS character_current_streak,
+        c.longest_streak AS character_longest_streak
     FROM friends f
     JOIN profiles p ON f.friend_id = p.id
+    LEFT JOIN characters c ON f.friend_id = c.user_id
     WHERE f.user_id = user_id_input;
 END;
 $$;

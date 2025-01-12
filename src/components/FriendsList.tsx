@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '../types/database';
 import type { FriendWithProfile } from '../types/friends';
-import Link from 'next/link';
+import FriendCharacterDisplay from './FriendCharacterDisplay';
 
 export default function FriendsList() {
   const [friends, setFriends] = useState<FriendWithProfile[]>([]);
@@ -81,49 +81,81 @@ export default function FriendsList() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {friends.map(friend => (
         <div
           key={friend.id}
-          className="bg-white rounded-lg shadow p-4 flex items-center justify-between"
+          className="bg-white rounded-lg shadow p-6"
         >
-          <div className="flex items-center space-x-4">
-            {friend.avatar_url ? (
-              <img
-                src={friend.avatar_url}
-                alt={friend.display_name}
-                className="w-12 h-12 rounded-full"
-              />
-            ) : (
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-primary text-lg font-semibold">
-                  {friend.display_name[0].toUpperCase()}
-                </span>
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center space-x-4">
+              {friend.avatar_url ? (
+                <img
+                  src={friend.avatar_url}
+                  alt={friend.display_name}
+                  className="w-12 h-12 rounded-full"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-primary text-lg font-semibold">
+                    {friend.display_name[0].toUpperCase()}
+                  </span>
+                </div>
+              )}
+              <div>
+                <h3 className="font-semibold text-gray-900">
+                  {friend.display_name}
+                </h3>
+                <p className="text-sm text-gray-500">@{friend.username}</p>
+                <p className="text-xs text-gray-400">Friend Code: {friend.friend_code}</p>
               </div>
-            )}
-            <div>
-              <h3 className="font-semibold text-gray-900">
-                {friend.display_name}
-              </h3>
-              <p className="text-sm text-gray-500">@{friend.username}</p>
-              <p className="text-xs text-gray-400">Friend Code: {friend.friend_code}</p>
             </div>
-          </div>
 
-          <div className="flex items-center space-x-2">
-            <Link
-              href={`/profile/${friend.friend_id}`}
-              className="text-primary hover:text-primary/80 text-sm font-medium"
-            >
-              View Profile
-            </Link>
             <button
               onClick={() => handleRemoveFriend(friend.friend_id)}
-              className="text-red-600 hover:text-red-700 text-sm font-medium ml-4"
+              className="text-red-600 hover:text-red-700 text-sm font-medium"
             >
-              Remove
+              Remove Friend
             </button>
           </div>
+
+          {/* Character Display */}
+          {friend.character_name && (
+            <div className="mt-4">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-medium text-gray-900">{friend.character_name}</h4>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-medium text-gray-500">Level</span>
+                    <span className="text-sm font-bold text-primary">{friend.character_level}</span>
+                  </div>
+                </div>
+
+                <div className="relative h-32 w-full rounded-lg overflow-hidden">
+                  <FriendCharacterDisplay 
+                    colorPrimary={friend.character_color_primary || '#000000'}
+                    colorSecondary={friend.character_color_secondary || '#000000'}
+                    colorAccent={friend.character_color_accent || '#000000'}
+                  />
+                </div>
+
+                <div className="mt-4 grid grid-cols-3 gap-4 text-center text-xs">
+                  <div>
+                    <div className="font-medium text-gray-500">Habits</div>
+                    <div className="text-sm font-bold text-gray-900">{friend.character_habits_completed}</div>
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-500">Goals</div>
+                    <div className="text-sm font-bold text-gray-900">{friend.character_goals_completed}</div>
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-500">Streak</div>
+                    <div className="text-sm font-bold text-gray-900">{friend.character_current_streak} days</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       ))}
     </div>
