@@ -39,6 +39,7 @@ DROP POLICY IF EXISTS "Users can delete friend requests they're involved in" ON 
 DROP POLICY IF EXISTS "Users can view their friends" ON friends;
 DROP POLICY IF EXISTS "Users can add friends" ON friends;
 DROP POLICY IF EXISTS "Users can remove friends" ON friends;
+DROP POLICY IF EXISTS "System can add friends" ON friends;
 
 -- Create policies for friend_requests table
 CREATE POLICY "Users can view friend requests they're involved in"
@@ -67,6 +68,18 @@ CREATE POLICY "Users can add friends"
     ON friends FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
+CREATE POLICY "System can add friends"
+    ON friends FOR INSERT
+    WITH CHECK (EXISTS (
+        SELECT 1 FROM friend_requests fr
+        WHERE fr.status = 'accepted'
+        AND (
+            (fr.sender_id = user_id AND fr.receiver_id = friend_id)
+            OR
+            (fr.receiver_id = user_id AND fr.sender_id = friend_id)
+        )
+    ));
+
 CREATE POLICY "Users can remove friends"
     ON friends FOR DELETE
     USING (auth.uid() = user_id OR auth.uid() = friend_id);
@@ -91,7 +104,7 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Create trigger for friend request acceptance
 CREATE TRIGGER friend_request_accepted
