@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="48" viewBox="0 0 32 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Left Sandal Base -->
+  <path d="M10 46
+           L14 46
+           L14 47
+           L10 47
+           Z"
+        fill="#FFFFFF"/>
+  
+  <!-- Right Sandal Base -->
+  <path d="M18 46
+           L22 46
+           L22 47
+           L18 47
+           Z"
+        fill="#FFFFFF"/>
+  
+  <!-- Left Sandal Straps -->
+  <path d="M11 46
+           L11 45
+           L13 45
+           L13 46"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+        
+  <path d="M12 45
+           L12 44"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+  
+  <!-- Right Sandal Straps -->
+  <path d="M19 46
+           L19 45
+           L21 45
+           L21 46"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+        
+  <path d="M20 45
+           L20 44"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+  
+  <!-- Left Sandal Details -->
+  <path d="M10 46.5
+           L14 46.5"
+        stroke="#F0F0F0"
+        stroke-width="0.5"/>
+  
+  <!-- Right Sandal Details -->
+  <path d="M18 46.5
+           L22 46.5"
+        stroke="#F0F0F0"
+        stroke-width="0.5"/>
+  
+  <!-- Sandal Soles -->
+  <path d="M10 47
+           L14 47"
+        stroke="#E0E0E0"
+        stroke-width="1"/>
+        
+  <path d="M18 47
+           L22 47"
+        stroke="#E0E0E0"
+        stroke-width="1"/>
+  
+  <!-- Strap Buckles -->
+  <path d="M11.5 45
+           C11.5 45 12 45.2 12.5 45"
+        stroke="#E0E0E0"
+        stroke-width="0.5"
+        fill="none"/>
+        
+  <path d="M19.5 45
+           C19.5 45 20 45.2 20.5 45"
+        stroke="#E0E0E0"
+        stroke-width="0.5"
+        fill="none"/>
+</svg>

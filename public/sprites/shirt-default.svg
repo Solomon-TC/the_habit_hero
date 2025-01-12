@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="48" viewBox="0 0 32 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- T-Shirt Body -->
+  <path d="M10 16
+           L22 16
+           L24 40
+           L8 40
+           L10 16
+           Z"
+        fill="#FFFFFF"/>
+  
+  <!-- Sleeves -->
+  <path d="M10 16
+           L6 24
+           L8 26
+           L10 20"
+        fill="#FFFFFF"/>
+        
+  <path d="M22 16
+           L26 24
+           L24 26
+           L22 20"
+        fill="#FFFFFF"/>
+  
+  <!-- Collar -->
+  <path d="M12 16
+           L14 18
+           L16 16
+           L18 18
+           L20 16"
+        fill="#F0F0F0"/>
+  
+  <!-- Wrinkles -->
+  <path d="M12 24
+           C14 25 18 25 20 24"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+        
+  <path d="M11 32
+           C14 33 18 33 21 32"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+        
+  <!-- Sleeve Wrinkles -->
+  <path d="M8 22
+           L10 24"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+        
+  <path d="M24 22
+           L22 24"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+  
+  <!-- Shadows -->
+  <path d="M10 16
+           L12 40"
+        stroke="#E0E0E0"
+        stroke-width="1"
+        fill="none"/>
+        
+  <path d="M22 16
+           L20 40"
+        stroke="#E0E0E0"
+        stroke-width="1"
+        fill="none"/>
+</svg>

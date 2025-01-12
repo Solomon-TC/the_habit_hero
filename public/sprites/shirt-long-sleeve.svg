@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="48" viewBox="0 0 32 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shirt Body -->
+  <path d="M10 16
+           L22 16
+           L24 40
+           L8 40
+           L10 16
+           Z"
+        fill="#FFFFFF"/>
+  
+  <!-- Long Sleeves -->
+  <path d="M10 16
+           L4 28
+           C4 30 6 32 8 32
+           L10 24"
+        fill="#FFFFFF"/>
+        
+  <path d="M22 16
+           L28 28
+           C28 30 26 32 24 32
+           L22 24"
+        fill="#FFFFFF"/>
+  
+  <!-- Collar -->
+  <path d="M12 16
+           L14 18
+           L16 16
+           L18 18
+           L20 16"
+        fill="#F0F0F0"/>
+  
+  <!-- Sleeve Cuffs -->
+  <path d="M4 28
+           C4 28 6 30 8 30"
+        stroke="#F0F0F0"
+        stroke-width="2"
+        fill="none"/>
+        
+  <path d="M28 28
+           C28 28 26 30 24 30"
+        stroke="#F0F0F0"
+        stroke-width="2"
+        fill="none"/>
+  
+  <!-- Wrinkles -->
+  <path d="M12 24
+           C14 25 18 25 20 24"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+        
+  <path d="M11 32
+           C14 33 18 33 21 32"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+  
+  <!-- Sleeve Wrinkles -->
+  <path d="M8 20
+           C8 20 6 24 6 28"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+        
+  <path d="M24 20
+           C24 20 26 24 26 28"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+  
+  <!-- Shadows -->
+  <path d="M10 16
+           L12 40"
+        stroke="#E0E0E0"
+        stroke-width="1"
+        fill="none"/>
+        
+  <path d="M22 16
+           L20 40"
+        stroke="#E0E0E0"
+        stroke-width="1"
+        fill="none"/>
+  
+  <!-- Sleeve Shadows -->
+  <path d="M10 18
+           L6 28"
+        stroke="#E0E0E0"
+        stroke-width="1"
+        fill="none"/>
+        
+  <path d="M22 18
+           L26 28"
+        stroke="#E0E0E0"
+        stroke-width="1"
+        fill="none"/>
+</svg>

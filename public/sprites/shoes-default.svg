@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="48" viewBox="0 0 32 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Left Shoe -->
+  <path d="M10 46
+           L14 46
+           C14 46 14 47 12 47
+           C10 47 10 46 10 46
+           Z"
+        fill="#FFFFFF"/>
+  
+  <!-- Right Shoe -->
+  <path d="M18 46
+           L22 46
+           C22 46 22 47 20 47
+           C18 47 18 46 18 46
+           Z"
+        fill="#FFFFFF"/>
+  
+  <!-- Left Shoe Details -->
+  <path d="M10 46
+           C10 46 12 46.5 14 46"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+        
+  <path d="M11 46
+           L11 47"
+        stroke="#F0F0F0"
+        stroke-width="0.5"/>
+        
+  <path d="M13 46
+           L13 47"
+        stroke="#F0F0F0"
+        stroke-width="0.5"/>
+  
+  <!-- Right Shoe Details -->
+  <path d="M18 46
+           C18 46 20 46.5 22 46"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+        
+  <path d="M19 46
+           L19 47"
+        stroke="#F0F0F0"
+        stroke-width="0.5"/>
+        
+  <path d="M21 46
+           L21 47"
+        stroke="#F0F0F0"
+        stroke-width="0.5"/>
+  
+  <!-- Shoe Soles -->
+  <path d="M10 47
+           L14 47"
+        stroke="#E0E0E0"
+        stroke-width="1"/>
+        
+  <path d="M18 47
+           L22 47"
+        stroke="#E0E0E0"
+        stroke-width="1"/>
+  
+  <!-- Laces -->
+  <path d="M11.5 46.2
+           L12.5 46.2"
+        stroke="#F0F0F0"
+        stroke-width="0.5"/>
+        
+  <path d="M19.5 46.2
+           L20.5 46.2"
+        stroke="#F0F0F0"
+        stroke-width="0.5"/>
+</svg>
