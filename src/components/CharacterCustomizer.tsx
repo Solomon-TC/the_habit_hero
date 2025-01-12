@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { HexColorPicker } from 'react-colorful';
-import { Character, SPRITE_CATEGORIES, SpriteCategory } from '../types/character';
+import { Character, SPRITE_CATEGORIES, SpriteCategory, BodyType, HairStyle, ShirtStyle, PantsStyle, ShoesStyle } from '../types/character';
 import SpriteCharacter from './SpriteCharacter';
 import type { Database } from '../types/database';
 
@@ -38,39 +38,58 @@ export default function CharacterCustomizer({ userId, onSave }: Props) {
         
         // Set default values if character doesn't exist
         if (!character) {
-          const defaultCharacter: Partial<Character> = {
+          const defaultCharacter: Database['public']['Tables']['characters']['Insert'] = {
             user_id: userId,
             name: 'My Character',
             level: 1,
             experience: 0,
             next_level_exp: 100,
-            body_type: 'default',
-            hair_style: 'default',
+            body_type: 'default' as BodyType,
+            hair_style: 'default' as HairStyle,
             hair_color: '#4A4A4A',
             skin_color: '#F5D0C5',
             eye_color: '#4A4A4A',
-            shirt_style: 'default',
+            shirt_style: 'default' as ShirtStyle,
             shirt_color: '#4A90E2',
-            pants_style: 'default',
+            pants_style: 'default' as PantsStyle,
             pants_color: '#4A4A4A',
-            shoes_style: 'default',
+            shoes_style: 'default' as ShoesStyle,
             shoes_color: '#4A4A4A',
             habits_completed: 0,
             goals_completed: 0,
             current_streak: 0,
-            longest_streak: 0
+            longest_streak: 0,
+            color_primary: '#4A90E2',
+            color_secondary: '#4A4A4A',
+            color_accent: '#F5D0C5'
           };
 
           const { data: newCharacter, error: createError } = await supabase
             .from('characters')
-            .insert([defaultCharacter])
+            .insert(defaultCharacter)
             .select()
             .single();
 
           if (createError) throw createError;
-          setCharacter(newCharacter);
+          if (newCharacter) {
+            setCharacter({
+              ...newCharacter,
+              body_type: newCharacter.body_type as BodyType,
+              hair_style: newCharacter.hair_style as HairStyle,
+              shirt_style: newCharacter.shirt_style as ShirtStyle,
+              pants_style: newCharacter.pants_style as PantsStyle,
+              shoes_style: newCharacter.shoes_style as ShoesStyle,
+            });
+          }
         } else {
-          setCharacter(character);
+          setCharacter({
+            ...character,
+            body_type: character.body_type as BodyType,
+            hair_style: character.hair_style as HairStyle,
+            shirt_style: character.shirt_style as ShirtStyle,
+            pants_style: character.pants_style as PantsStyle,
+            shoes_style: character.shoes_style as ShoesStyle,
+          });
         }
       } catch (err) {
         console.error('Error fetching character:', err);
@@ -87,10 +106,13 @@ export default function CharacterCustomizer({ userId, onSave }: Props) {
     if (!character) return;
 
     const field = `${category}_style` as keyof Character;
-    setCharacter(prev => prev ? {
-      ...prev,
-      [field]: value
-    } : null);
+    setCharacter(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        [field]: value as BodyType | HairStyle | ShirtStyle | PantsStyle | ShoesStyle
+      };
+    });
   };
 
   const handleColorChange = (field: ColorField, color: string) => {
@@ -119,6 +141,9 @@ export default function CharacterCustomizer({ userId, onSave }: Props) {
           pants_color: character.pants_color,
           shoes_style: character.shoes_style,
           shoes_color: character.shoes_color,
+          color_primary: character.color_primary,
+          color_secondary: character.color_secondary,
+          color_accent: character.color_accent,
         })
         .eq('id', character.id);
 
@@ -178,8 +203,8 @@ export default function CharacterCustomizer({ userId, onSave }: Props) {
               className="input-field"
             >
               {config.options.map((option) => (
-                <option key={option} value={option}>
-                  {option.charAt(0).toUpperCase() + option.slice(1).replace('-', ' ')}
+                <option key={option.id} value={option.id}>
+                  {option.name}
                 </option>
               ))}
             </select>
