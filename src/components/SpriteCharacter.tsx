@@ -1,7 +1,6 @@
 'use client';
 
 import { Character } from '../types/character';
-import { useEffect, useState } from 'react';
 
 interface Props {
   character: Character;
@@ -9,37 +8,41 @@ interface Props {
   height?: number;
 }
 
+type SpriteMap = Record<string, Record<string, string>>;
+
+// Import all SVG files statically
+const sprites: SpriteMap = {
+  body: {
+    default: '/sprites/body-default.svg',
+    athletic: '/sprites/body-athletic.svg',
+    round: '/sprites/body-round.svg'
+  },
+  hair: {
+    default: '/sprites/hair-default.svg',
+    long: '/sprites/hair-long.svg',
+    ponytail: '/sprites/hair-ponytail.svg',
+    spiky: '/sprites/hair-spiky.svg'
+  },
+  shirt: {
+    default: '/sprites/shirt-default.svg',
+    'tank-top': '/sprites/shirt-tank-top.svg',
+    'long-sleeve': '/sprites/shirt-long-sleeve.svg',
+    hoodie: '/sprites/shirt-hoodie.svg'
+  },
+  pants: {
+    default: '/sprites/pants-default.svg',
+    shorts: '/sprites/pants-shorts.svg',
+    skirt: '/sprites/pants-skirt.svg',
+    baggy: '/sprites/pants-baggy.svg'
+  },
+  shoes: {
+    default: '/sprites/shoes-default.svg',
+    boots: '/sprites/shoes-boots.svg',
+    sandals: '/sprites/shoes-sandals.svg'
+  }
+};
+
 export default function SpriteCharacter({ character, width = 128, height = 192 }: Props) {
-  const [svgContents, setSvgContents] = useState<{ [key: string]: string }>({});
-
-  useEffect(() => {
-    const loadSvgs = async () => {
-      const parts = [
-        { type: 'body', style: character.body_type },
-        { type: 'hair', style: character.hair_style },
-        { type: 'shirt', style: character.shirt_style },
-        { type: 'pants', style: character.pants_style },
-        { type: 'shoes', style: character.shoes_style }
-      ];
-
-      const contents: { [key: string]: string } = {};
-      
-      for (const part of parts) {
-        try {
-          const response = await fetch(`/sprites/${part.type}-${part.style}.svg`);
-          const text = await response.text();
-          contents[`${part.type}-${part.style}`] = text;
-        } catch (error) {
-          console.error(`Error loading ${part.type}-${part.style}.svg:`, error);
-        }
-      }
-
-      setSvgContents(contents);
-    };
-
-    loadSvgs();
-  }, [character]);
-
   const parts = [
     { type: 'body', style: character.body_type, color: character.skin_color },
     { type: 'hair', style: character.hair_style, color: character.hair_color },
@@ -54,20 +57,23 @@ export default function SpriteCharacter({ character, width = 128, height = 192 }
       style={{ width: `${width}px`, height: `${height}px` }}
     >
       {parts.map(({ type, style, color }) => {
-        const svgContent = svgContents[`${type}-${style}`];
-        if (!svgContent) return null;
-
-        const coloredSvg = svgContent
-          .replace(/#F5D0C5/g, color)
-          .replace(/#FFFFFF/g, color)
-          .replace(/#ffffff/g, color);
+        const spritePath = sprites[type]?.[style];
+        if (!spritePath) return null;
 
         return (
           <div 
             key={`${type}-${style}`}
             className="absolute inset-0"
-            dangerouslySetInnerHTML={{ 
-              __html: coloredSvg
+            style={{
+              WebkitMaskImage: `url(${spritePath})`,
+              maskImage: `url(${spritePath})`,
+              WebkitMaskSize: 'contain',
+              maskSize: 'contain',
+              WebkitMaskRepeat: 'no-repeat',
+              maskRepeat: 'no-repeat',
+              WebkitMaskPosition: 'center',
+              maskPosition: 'center',
+              backgroundColor: color
             }}
           />
         );
