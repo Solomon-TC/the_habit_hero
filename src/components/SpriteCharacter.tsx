@@ -1,7 +1,6 @@
 'use client';
 
 import { Character } from '../types/character';
-import Image from 'next/image';
 
 interface Props {
   character: Character;
@@ -28,7 +27,7 @@ export default function SpriteCharacter({ character, width = 128, height = 192 }
           key={`${type}-${style}`}
           className="absolute inset-0"
         >
-          <Image
+          <img
             src={`/sprites/${type}-${style}.svg`}
             alt={`${type} ${style}`}
             width={width}
@@ -36,6 +35,9 @@ export default function SpriteCharacter({ character, width = 128, height = 192 }
             style={{
               filter: `brightness(0) saturate(100%) invert(1) drop-shadow(0 0 0 ${color})`,
               mixBlendMode: 'multiply',
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain'
             }}
           />
         </div>
