@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { Character } from '../types/character';
 
 interface Props {
@@ -10,37 +9,43 @@ interface Props {
 }
 
 export default function SpriteCharacter({ character, width = 128, height = 192 }: Props) {
-  const layers = [
-    { type: 'body', style: character.body_type, color: character.skin_color },
-    { type: 'hair', style: character.hair_style, color: character.hair_color },
-    { type: 'shirt', style: character.shirt_style, color: character.shirt_color },
-    { type: 'pants', style: character.pants_style, color: character.pants_color },
-    { type: 'shoes', style: character.shoes_style, color: character.shoes_color }
-  ];
-
   return (
     <div 
       className="relative"
       style={{ width: `${width}px`, height: `${height}px` }}
     >
-      {layers.map(({ type, style, color }) => (
-        <div 
-          key={`${type}-${style}`}
-          className="absolute top-0 left-0 w-full h-full"
-          style={{ filter: `drop-shadow(0 0 0 ${color})` }}
-        >
-          <Image
-            src={`/sprites/${type}-${style}.svg`}
-            alt={`${type} ${style}`}
-            width={width}
-            height={height}
-            style={{
-              filter: 'brightness(0) invert(1)',
-              mixBlendMode: 'multiply'
-            }}
-          />
-        </div>
-      ))}
+      <div className="absolute inset-0">
+        <img
+          src={`/sprites/body-${character.body_type}.svg`}
+          alt={`${character.body_type} body`}
+          className="absolute inset-0 w-full h-full"
+          style={{ filter: `drop-shadow(0 0 0 ${character.skin_color})` }}
+        />
+        <img
+          src={`/sprites/hair-${character.hair_style}.svg`}
+          alt={`${character.hair_style} hair`}
+          className="absolute inset-0 w-full h-full"
+          style={{ filter: `drop-shadow(0 0 0 ${character.hair_color})` }}
+        />
+        <img
+          src={`/sprites/shirt-${character.shirt_style}.svg`}
+          alt={`${character.shirt_style} shirt`}
+          className="absolute inset-0 w-full h-full"
+          style={{ filter: `drop-shadow(0 0 0 ${character.shirt_color})` }}
+        />
+        <img
+          src={`/sprites/pants-${character.pants_style}.svg`}
+          alt={`${character.pants_style} pants`}
+          className="absolute inset-0 w-full h-full"
+          style={{ filter: `drop-shadow(0 0 0 ${character.pants_color})` }}
+        />
+        <img
+          src={`/sprites/shoes-${character.shoes_style}.svg`}
+          alt={`${character.shoes_style} shoes`}
+          className="absolute inset-0 w-full h-full"
+          style={{ filter: `drop-shadow(0 0 0 ${character.shoes_color})` }}
+        />
+      </div>
     </div>
   );
 }
