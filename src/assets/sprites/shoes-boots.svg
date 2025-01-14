@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="48" viewBox="0 0 32 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Left Boot -->
+  <path d="M10 45
+           L14 45
+           L14 47
+           C14 47 14 48 12 48
+           C10 48 10 47 10 47
+           Z"
+        fill="#FFFFFF"/>
+  
+  <!-- Right Boot -->
+  <path d="M18 45
+           L22 45
+           L22 47
+           C22 47 22 48 20 48
+           C18 48 18 47 18 47
+           Z"
+        fill="#FFFFFF"/>
+  
+  <!-- Left Boot Details -->
+  <path d="M10 45
+           L14 45"
+        stroke="#F0F0F0"
+        stroke-width="1"/>
+        
+  <path d="M10 46
+           L14 46"
+        stroke="#F0F0F0"
+        stroke-width="0.5"/>
+        
+  <!-- Right Boot Details -->
+  <path d="M18 45
+           L22 45"
+        stroke="#F0F0F0"
+        stroke-width="1"/>
+        
+  <path d="M18 46
+           L22 46"
+        stroke="#F0F0F0"
+        stroke-width="0.5"/>
+  
+  <!-- Boot Tops -->
+  <path d="M11 45
+           L11 44
+           L13 44
+           L13 45"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+        
+  <path d="M19 45
+           L19 44
+           L21 44
+           L21 45"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+  
+  <!-- Boot Soles -->
+  <path d="M10 47
+           L14 47"
+        stroke="#E0E0E0"
+        stroke-width="1"/>
+        
+  <path d="M18 47
+           L22 47"
+        stroke="#E0E0E0"
+        stroke-width="1"/>
+  
+  <!-- Boot Heels -->
+  <path d="M10 47
+           L10 48"
+        stroke="#E0E0E0"
+        stroke-width="1.5"/>
+        
+  <path d="M18 47
+           L18 48"
+        stroke="#E0E0E0"
+        stroke-width="1.5"/>
+  
+  <!-- Laces -->
+  <path d="M11.5 44.5
+           L12.5 44.5"
+        stroke="#F0F0F0"
+        stroke-width="0.5"/>
+        
+  <path d="M19.5 44.5
+           L20.5 44.5"
+        stroke="#F0F0F0"
+        stroke-width="0.5"/>
+        
+  <path d="M11.5 45.5
+           L12.5 45.5"
+        stroke="#F0F0F0"
+        stroke-width="0.5"/>
+        
+  <path d="M19.5 45.5
+           L20.5 45.5"
+        stroke="#F0F0F0"
+        stroke-width="0.5"/>
+</svg>

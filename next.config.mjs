@@ -7,9 +7,13 @@ const nextConfig = {
         hostname: 'uhmqsszvollkbxcspyqe.supabase.co',
       },
     ],
-    dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
+  // Allow all static files
+  experimental: {
+    appDir: true,
+  },
+  // Disable strict mode for development
+  reactStrictMode: false,
 }
 
 export default nextConfig;

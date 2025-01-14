@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="48" viewBox="0 0 32 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Pants Waistband -->
+  <path d="M8 40
+           L24 40
+           L24 42
+           L8 42
+           Z"
+        fill="#FFFFFF"/>
+  
+  <!-- Baggy Pants Legs -->
+  <path d="M10 42
+           C10 42 8 44 8 46
+           L14 46
+           C14 46 13 44 13 42
+           Z"
+        fill="#FFFFFF"/>
+        
+  <path d="M22 42
+           C22 42 24 44 24 46
+           L18 46
+           C18 46 19 44 19 42
+           Z"
+        fill="#FFFFFF"/>
+  
+  <!-- Belt Loops -->
+  <path d="M10 40
+           L10 42"
+        stroke="#F0F0F0"
+        stroke-width="1"/>
+        
+  <path d="M14 40
+           L14 42"
+        stroke="#F0F0F0"
+        stroke-width="1"/>
+        
+  <path d="M18 40
+           L18 42"
+        stroke="#F0F0F0"
+        stroke-width="1"/>
+        
+  <path d="M22 40
+           L22 42"
+        stroke="#F0F0F0"
+        stroke-width="1"/>
+  
+  <!-- Leg Wrinkles -->
+  <path d="M9 43
+           C9 43 11 44 13 43"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+        
+  <path d="M19 43
+           C19 43 21 44 23 43"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+        
+  <path d="M9 45
+           C9 45 11 46 13 45"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+        
+  <path d="M19 45
+           C19 45 21 46 23 45"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+  
+  <!-- Bunched Bottom -->
+  <path d="M8 46
+           C8 46 10 45 14 46"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+        
+  <path d="M18 46
+           C18 46 22 45 24 46"
+        stroke="#F0F0F0"
+        stroke-width="1"
+        fill="none"/>
+  
+  <!-- Seams -->
+  <path d="M16 42
+           L16 46"
+        stroke="#F0F0F0"
+        stroke-width="0.5"/>
+  
+  <!-- Shadows -->
+  <path d="M10 42
+           C10 42 9 44 9 46"
+        stroke="#E0E0E0"
+        stroke-width="0.5"
+        fill="none"/>
+        
+  <path d="M22 42
+           C22 42 23 44 23 46"
+        stroke="#E0E0E0"
+        stroke-width="0.5"
+        fill="none"/>
+  
+  <!-- Extra Bagginess -->
+  <path d="M11 42
+           C11 42 10 44 11 46"
+        stroke="#E0E0E0"
+        stroke-width="0.5"
+        fill="none"/>
+        
+  <path d="M21 42
+           C21 42 22 44 21 46"
+        stroke="#E0E0E0"
+        stroke-width="0.5"
+        fill="none"/>
+</svg>
