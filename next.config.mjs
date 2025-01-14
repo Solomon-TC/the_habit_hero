@@ -1,17 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'uhmqsszvollkbxcspyqe.supabase.co',
+      },
+    ],
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
   webpack(config) {
-    // Configure SVG handling
     config.module.rules.push({
       test: /\.svg$/,
-      use: ['@svgr/webpack']
+      use: ['@svgr/webpack'],
     });
-
     return config;
   },
-  images: {
-    domains: ['uhmqsszvollkbxcspyqe.supabase.co'], // Allow Supabase storage URLs
-  }
-};
+}
 
 export default nextConfig;
