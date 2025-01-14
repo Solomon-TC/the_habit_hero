@@ -8,12 +8,15 @@ const nextConfig = {
       },
     ],
   },
-  // Allow all static files
-  experimental: {
-    appDir: true,
+  webpack(config) {
+    // SVG handling
+    config.module.rules.push({
+      test: /\.svg$/,
+      issuer: /\.[jt]sx?$/,
+      use: ['@svgr/webpack']
+    });
+    return config;
   },
-  // Disable strict mode for development
-  reactStrictMode: false,
 }
 
 export default nextConfig;

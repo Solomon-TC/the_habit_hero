@@ -13,7 +13,6 @@
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "@types/node": "^20.11.16",
-    "@types/react": "^18.2.52",
     "@types/react-dom": "^18.2.18",
     "autoprefixer": "^10.4.17",
     "nanoid": "^5.0.9",
@@ -27,6 +26,8 @@
     "use-debounce": "^10.0.4"
   },
   "devDependencies": {
+    "@svgr/webpack": "^8.1.0",
+    "@types/react": "^19.0.7",
     "@typescript-eslint/eslint-plugin": "^6.20.0",
     "@typescript-eslint/parser": "^6.20.0",
     "eslint": "^8.56.0",
