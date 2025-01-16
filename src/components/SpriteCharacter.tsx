@@ -9,6 +9,14 @@ interface Props {
   height?: number;
 }
 
+const createSvgDataUrl = (path: string) => {
+  return `data:image/svg+xml;base64,${Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 128 192">
+      <use href="${path}#sprite" fill="currentColor"/>
+    </svg>`
+  ).toString('base64')}`;
+};
+
 export default function SpriteCharacter({ character, width = 128, height = 192 }: Props) {
   const parts = [
     { type: 'body', style: character.body_type, color: character.skin_color },
@@ -24,14 +32,14 @@ export default function SpriteCharacter({ character, width = 128, height = 192 }
       style={{ width: `${width}px`, height: `${height}px` }}
     >
       {parts.map(({ type, style, color }) => {
-        const maskUrl = encodeURIComponent(`/sprites/${type}-${style}.svg`);
+        const svgUrl = createSvgDataUrl(`/sprites/${type}-${style}.svg`);
         return (
           <div 
             key={`${type}-${style}`}
             className={styles.sprite}
             style={{
-              maskImage: `url("${maskUrl}")`,
-              WebkitMaskImage: `url("${maskUrl}")`,
+              maskImage: `url("${svgUrl}")`,
+              WebkitMaskImage: `url("${svgUrl}")`,
               backgroundColor: color,
             }}
           />
