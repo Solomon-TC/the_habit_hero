@@ -32,6 +32,7 @@ export default function SpriteCharacter({ character, width = 128, height = 192 }
           className={styles.part}
           style={{
             backgroundColor: color,
+            backgroundImage: `url(/sprites/${type}-${style}.svg)`,
             maskImage: `url(/sprites/${type}-${style}.svg)`,
             WebkitMaskImage: `url(/sprites/${type}-${style}.svg)`,
           }}
