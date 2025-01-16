@@ -23,17 +23,20 @@ export default function SpriteCharacter({ character, width = 128, height = 192 }
       className={styles.container}
       style={{ width: `${width}px`, height: `${height}px` }}
     >
-      {parts.map(({ type, style, color }) => (
-        <div 
-          key={`${type}-${style}`}
-          className={styles.sprite}
-          style={{
-            maskImage: `url(/sprites/${type}-${style}.svg)`,
-            WebkitMaskImage: `url(/sprites/${type}-${style}.svg)`,
-            backgroundColor: color,
-          }}
-        />
-      ))}
+      {parts.map(({ type, style, color }) => {
+        const maskUrl = encodeURIComponent(`/sprites/${type}-${style}.svg`);
+        return (
+          <div 
+            key={`${type}-${style}`}
+            className={styles.sprite}
+            style={{
+              maskImage: `url("${maskUrl}")`,
+              WebkitMaskImage: `url("${maskUrl}")`,
+              backgroundColor: color,
+            }}
+          />
+        );
+      })}
     </div>
   );
 }
