@@ -1,6 +1,7 @@
 'use client';
 
 import { Character } from '../types/character';
+import styles from './SpriteCharacter.module.css';
 
 interface Props {
   character: Character;
@@ -19,30 +20,20 @@ export default function SpriteCharacter({ character, width = 128, height = 192 }
 
   return (
     <div 
+      className={styles.container}
       style={{ 
-        position: 'relative',
         width: `${width}px`, 
         height: `${height}px`,
-        isolation: 'isolate',
       }}
     >
       {parts.map(({ type, style, color }) => (
         <div 
           key={`${type}-${style}`}
+          className={styles.part}
           style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
             backgroundColor: color,
-            WebkitMaskImage: `url(/sprites/${type}-${style}.svg)`,
             maskImage: `url(/sprites/${type}-${style}.svg)`,
-            WebkitMaskSize: 'contain',
-            maskSize: 'contain',
-            WebkitMaskPosition: 'center',
-            maskPosition: 'center',
-            WebkitMaskRepeat: 'no-repeat',
-            maskRepeat: 'no-repeat',
+            WebkitMaskImage: `url(/sprites/${type}-${style}.svg)`,
           }}
         />
       ))}
