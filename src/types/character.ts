@@ -8,49 +8,49 @@ export type SpriteCategory = 'body' | 'hair' | 'shirt' | 'pants' | 'shoes';
 
 export const SPRITE_CATEGORIES: Record<SpriteCategory, {
   name: string;
-  options: { id: string; name: string; requiresColor: boolean }[];
+  options: { id: string; name: string; styleClass: string; requiresColor: boolean }[];
 }> = {
   body: {
     name: 'Body Type',
     options: [
-      { id: 'default', name: 'Default', requiresColor: true },
-      { id: 'athletic', name: 'Athletic', requiresColor: true },
-      { id: 'round', name: 'Round', requiresColor: true }
+      { id: 'default', name: 'Default', styleClass: 'body-default', requiresColor: true },
+      { id: 'athletic', name: 'Athletic', styleClass: 'body-athletic', requiresColor: true },
+      { id: 'round', name: 'Round', styleClass: 'body-round', requiresColor: true }
     ]
   },
   hair: {
     name: 'Hair Style',
     options: [
-      { id: 'default', name: 'Default', requiresColor: true },
-      { id: 'long', name: 'Long', requiresColor: true },
-      { id: 'ponytail', name: 'Ponytail', requiresColor: true },
-      { id: 'spiky', name: 'Spiky', requiresColor: true }
+      { id: 'default', name: 'Short', styleClass: 'hair-default', requiresColor: true },
+      { id: 'long', name: 'Long', styleClass: 'hair-long', requiresColor: true },
+      { id: 'ponytail', name: 'Ponytail', styleClass: 'hair-ponytail', requiresColor: true },
+      { id: 'spiky', name: 'Spiky', styleClass: 'hair-spiky', requiresColor: true }
     ]
   },
   shirt: {
     name: 'Shirt Style',
     options: [
-      { id: 'default', name: 'Default', requiresColor: true },
-      { id: 'tank-top', name: 'Tank Top', requiresColor: true },
-      { id: 'long-sleeve', name: 'Long Sleeve', requiresColor: true },
-      { id: 'hoodie', name: 'Hoodie', requiresColor: true }
+      { id: 'default', name: 'T-Shirt', styleClass: 'shirt-default', requiresColor: true },
+      { id: 'tank-top', name: 'Tank Top', styleClass: 'shirt-tank-top', requiresColor: true },
+      { id: 'long-sleeve', name: 'Long Sleeve', styleClass: 'shirt-long-sleeve', requiresColor: true },
+      { id: 'hoodie', name: 'Hoodie', styleClass: 'shirt-hoodie', requiresColor: true }
     ]
   },
   pants: {
     name: 'Pants Style',
     options: [
-      { id: 'default', name: 'Default', requiresColor: true },
-      { id: 'shorts', name: 'Shorts', requiresColor: true },
-      { id: 'skirt', name: 'Skirt', requiresColor: true },
-      { id: 'baggy', name: 'Baggy', requiresColor: true }
+      { id: 'default', name: 'Regular', styleClass: 'pants-default', requiresColor: true },
+      { id: 'shorts', name: 'Shorts', styleClass: 'pants-shorts', requiresColor: true },
+      { id: 'skirt', name: 'Skirt', styleClass: 'pants-skirt', requiresColor: true },
+      { id: 'baggy', name: 'Baggy', styleClass: 'pants-baggy', requiresColor: true }
     ]
   },
   shoes: {
     name: 'Shoes Style',
     options: [
-      { id: 'default', name: 'Default', requiresColor: true },
-      { id: 'boots', name: 'Boots', requiresColor: true },
-      { id: 'sandals', name: 'Sandals', requiresColor: true }
+      { id: 'default', name: 'Sneakers', styleClass: 'shoes-default', requiresColor: true },
+      { id: 'boots', name: 'Boots', styleClass: 'shoes-boots', requiresColor: true },
+      { id: 'sandals', name: 'Sandals', styleClass: 'shoes-sandals', requiresColor: true }
     ]
   }
 };
@@ -72,16 +72,12 @@ export interface Character {
   hair_style: HairStyle;
   hair_color: string;
   skin_color: string;
-  eye_color: string;
   shirt_style: ShirtStyle;
   shirt_color: string;
   pants_style: PantsStyle;
   pants_color: string;
   shoes_style: ShoesStyle;
   shoes_color: string;
-  color_primary: string;
-  color_secondary: string;
-  color_accent: string;
 }
 
 export interface FriendWithProfile {
@@ -106,14 +102,10 @@ export interface FriendWithProfile {
   character_hair_style: string | null;
   character_hair_color: string | null;
   character_skin_color: string | null;
-  character_eye_color: string | null;
   character_shirt_style: string | null;
   character_shirt_color: string | null;
   character_pants_style: string | null;
   character_pants_color: string | null;
   character_shoes_style: string | null;
   character_shoes_color: string | null;
-  character_color_primary: string | null;
-  character_color_secondary: string | null;
-  character_color_accent: string | null;
 }
