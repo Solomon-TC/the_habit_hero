@@ -2,6 +2,7 @@
 
 import { Character } from '../types/character';
 import styles from './SpriteCharacter.module.css';
+import { useEffect, useState } from 'react';
 
 interface Props {
   character: Character;
@@ -9,15 +10,35 @@ interface Props {
   height?: number;
 }
 
-const createSvgDataUrl = (path: string) => {
-  return `data:image/svg+xml;base64,${Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 128 192">
-      <use href="${path}#sprite" fill="currentColor"/>
-    </svg>`
-  ).toString('base64')}`;
-};
-
 export default function SpriteCharacter({ character, width = 128, height = 192 }: Props) {
+  const [svgContents, setSvgContents] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const loadSvgs = async () => {
+      const parts = [
+        { type: 'body', style: character.body_type },
+        { type: 'hair', style: character.hair_style },
+        { type: 'shirt', style: character.shirt_style },
+        { type: 'pants', style: character.pants_style },
+        { type: 'shoes', style: character.shoes_style }
+      ];
+
+      const contents: Record<string, string> = {};
+      for (const { type, style } of parts) {
+        try {
+          const svgModule = await import(`../../public/sprites/${type}-${style}.svg`);
+          contents[`${type}-${style}`] = svgModule.default;
+        } catch (error) {
+          console.error(`Error loading SVG: ${type}-${style}`, error);
+        }
+      }
+
+      setSvgContents(contents);
+    };
+
+    loadSvgs();
+  }, [character]);
+
   const parts = [
     { type: 'body', style: character.body_type, color: character.skin_color },
     { type: 'hair', style: character.hair_style, color: character.hair_color },
@@ -32,7 +53,9 @@ export default function SpriteCharacter({ character, width = 128, height = 192 }
       style={{ width: `${width}px`, height: `${height}px` }}
     >
       {parts.map(({ type, style, color }) => {
-        const svgUrl = createSvgDataUrl(`/sprites/${type}-${style}.svg`);
+        const svgUrl = svgContents[`${type}-${style}`];
+        if (!svgUrl) return null;
+
         return (
           <div 
             key={`${type}-${style}`}
