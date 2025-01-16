@@ -8,6 +8,34 @@ interface Props {
   height?: number;
 }
 
+function hexToRgb(hex: string): [number, number, number] {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) {
+    return [0, 0, 0];
+  }
+  return [
+    parseInt(result[1], 16),
+    parseInt(result[2], 16),
+    parseInt(result[3], 16)
+  ];
+}
+
+function getColorFilter(color: string): string {
+  const [r, g, b] = hexToRgb(color);
+  const brightness = (r + g + b) / (255 * 3);
+  const saturation = Math.max(r, g, b) - Math.min(r, g, b);
+
+  return `
+    brightness(0)
+    saturate(100%)
+    invert(1)
+    sepia(${saturation / 255})
+    saturate(${1 + saturation / 255})
+    hue-rotate(${Math.round((r + g + b) / 3)}deg)
+    brightness(${0.5 + brightness / 2})
+  `.replace(/\s+/g, ' ').trim();
+}
+
 export default function SpriteCharacter({ character, width = 128, height = 192 }: Props) {
   const parts = [
     { type: 'body', style: character.body_type, color: character.skin_color },
@@ -37,79 +65,10 @@ export default function SpriteCharacter({ character, width = 128, height = 192 }
             backgroundSize: 'contain',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            filter: `
-              brightness(0)
-              saturate(100%)
-              invert(1)
-              sepia(100%)
-              saturate(10000%)
-              hue-rotate(${getHueRotate(color)}deg)
-              brightness(${getBrightness(color)})
-              contrast(${getContrast(color)})
-            `.replace(/\s+/g, ' ').trim(),
+            filter: getColorFilter(color),
           }}
         />
       ))}
     </div>
   );
-}
-
-function getHueRotate(color: string): number {
-  const hex = color.replace('#', '');
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  const hsl = rgbToHsl(r, g, b);
-  return Math.round(hsl[0] * 360);
-}
-
-function getBrightness(color: string): number {
-  const hex = color.replace('#', '');
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  const hsl = rgbToHsl(r, g, b);
-  return hsl[2];
-}
-
-function getContrast(color: string): number {
-  const hex = color.replace('#', '');
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  const hsl = rgbToHsl(r, g, b);
-  return 1 + hsl[1] * 2;
-}
-
-function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
-  r /= 255;
-  g /= 255;
-  b /= 255;
-
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  let h = 0;
-  let s = 0;
-  const l = (max + min) / 2;
-
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-
-    switch (max) {
-      case r:
-        h = (g - b) / d + (g < b ? 6 : 0);
-        break;
-      case g:
-        h = (b - r) / d + 2;
-        break;
-      case b:
-        h = (r - g) / d + 4;
-        break;
-    }
-
-    h /= 6;
-  }
-
-  return [h, s, l];
 }
