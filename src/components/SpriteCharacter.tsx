@@ -1,13 +1,13 @@
 'use client';
 
 import { Character } from '../types/character';
+import Image from 'next/image';
 
 interface Props {
   character: Character;
   width?: number;
   height?: number;
 }
-
 
 export default function SpriteCharacter({ character, width = 128, height = 192 }: Props) {
   const parts = [
@@ -27,20 +27,21 @@ export default function SpriteCharacter({ character, width = 128, height = 192 }
         <div 
           key={`${type}-${style}`}
           className="absolute inset-0"
-          style={{
-            WebkitMaskImage: `url(/sprites/${type}-${style}.svg)`,
-            maskImage: `url(/sprites/${type}-${style}.svg)`,
-            WebkitMaskSize: 'contain',
-            maskSize: 'contain',
-            WebkitMaskRepeat: 'no-repeat',
-            maskRepeat: 'no-repeat',
-            WebkitMaskPosition: 'center',
-            maskPosition: 'center',
-            backgroundColor: color,
-            width: '100%',
-            height: '100%',
-          }}
-        />
+        >
+          <Image
+            src={`/sprites/${type}-${style}.svg`}
+            alt={`${type} ${style}`}
+            width={width}
+            height={height}
+            style={{
+              filter: `brightness(0) saturate(100%) invert(1) drop-shadow(0 0 0 ${color})`,
+              mixBlendMode: 'multiply',
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain'
+            }}
+          />
+        </div>
       ))}
     </div>
   );
