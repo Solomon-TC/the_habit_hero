@@ -1,6 +1,7 @@
 'use client';
 
 import { Character } from '../types/character';
+import styles from './SpriteCharacter.module.css';
 
 interface Props {
   character: Character;
@@ -19,33 +20,18 @@ export default function SpriteCharacter({ character, width = 128, height = 192 }
 
   return (
     <div 
-      className="relative"
-      style={{ 
-        width: `${width}px`, 
-        height: `${height}px`,
-        '--sprite-width': `${width}px`,
-        '--sprite-height': `${height}px`,
-      } as React.CSSProperties}
+      className={styles.container}
+      style={{ width: `${width}px`, height: `${height}px` }}
     >
       {parts.map(({ type, style, color }) => (
         <div 
           key={`${type}-${style}`}
-          className="absolute inset-0"
+          className={styles.sprite}
           style={{
-            '--sprite-color': color,
-            '--sprite-url': `url(/sprites/${type}-${style}.svg)`,
-            WebkitMaskImage: 'var(--sprite-url)',
-            maskImage: 'var(--sprite-url)',
-            WebkitMaskSize: 'contain',
-            maskSize: 'contain',
-            WebkitMaskRepeat: 'no-repeat',
-            maskRepeat: 'no-repeat',
-            WebkitMaskPosition: 'center',
-            maskPosition: 'center',
-            backgroundColor: 'var(--sprite-color)',
-            width: 'var(--sprite-width)',
-            height: 'var(--sprite-height)',
-          } as React.CSSProperties}
+            maskImage: `url(/sprites/${type}-${style}.svg)`,
+            WebkitMaskImage: `url(/sprites/${type}-${style}.svg)`,
+            backgroundColor: color,
+          }}
         />
       ))}
     </div>
