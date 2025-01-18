@@ -1,254 +1,126 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
+import { useCallback, useState } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { HexColorPicker } from 'react-colorful';
-import { Character, SPRITE_CATEGORIES, SpriteCategory, BodyType, HairStyle, ShirtStyle, PantsStyle, ShoesStyle } from '../types/character';
-import SpriteCharacter from './SpriteCharacter';
+import { Character, SPRITE_CATEGORIES, SpriteCategory } from '../types/character';
+import CharacterSprite from './CharacterSprite';
 import type { Database } from '../types/database';
 
 interface Props {
-  userId: string;
-  onSave?: (character: Character) => void;
+  character: Character;
+  onUpdate?: (character: Character) => void;
 }
 
-type ColorField = 'skin_color' | 'hair_color' | 'eye_color' | 'shirt_color' | 'pants_color' | 'shoes_color';
+type StyleKey = `${SpriteCategory}_${'type' | 'style'}`;
+type ColorKey = `${SpriteCategory}_color` | 'skin_color';
 
-export default function CharacterCustomizer({ userId, onSave }: Props) {
-  const [character, setCharacter] = useState<Character | null>(null);
-  const [activeColorPicker, setActiveColorPicker] = useState<ColorField | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export default function CharacterCustomizer({ character, onUpdate }: Props) {
+  const supabase = createClientComponentClient<Database>();
+  const [selectedCategory, setSelectedCategory] = useState<SpriteCategory>('body');
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
-  const supabase = createBrowserClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
-  useEffect(() => {
-    const fetchCharacter = async () => {
-      try {
-        const { data: character, error: characterError } = await supabase
-          .from('characters')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
-
-        if (characterError) throw characterError;
-        
-        // Set default values if character doesn't exist
-        if (!character) {
-          const defaultCharacter: Database['public']['Tables']['characters']['Insert'] = {
-            user_id: userId,
-            name: 'My Character',
-            level: 1,
-            experience: 0,
-            next_level_exp: 100,
-            body_type: 'default' as BodyType,
-            hair_style: 'default' as HairStyle,
-            hair_color: '#4A4A4A',
-            skin_color: '#F5D0C5',
-            eye_color: '#4A4A4A',
-            shirt_style: 'default' as ShirtStyle,
-            shirt_color: '#4A90E2',
-            pants_style: 'default' as PantsStyle,
-            pants_color: '#4A4A4A',
-            shoes_style: 'default' as ShoesStyle,
-            shoes_color: '#4A4A4A',
-            habits_completed: 0,
-            goals_completed: 0,
-            current_streak: 0,
-            longest_streak: 0,
-            color_primary: '#4A90E2',
-            color_secondary: '#4A4A4A',
-            color_accent: '#F5D0C5'
-          };
-
-          const { data: newCharacter, error: createError } = await supabase
-            .from('characters')
-            .insert(defaultCharacter)
-            .select()
-            .single();
-
-          if (createError) throw createError;
-          if (newCharacter) {
-            setCharacter({
-              ...newCharacter,
-              body_type: newCharacter.body_type as BodyType,
-              hair_style: newCharacter.hair_style as HairStyle,
-              shirt_style: newCharacter.shirt_style as ShirtStyle,
-              pants_style: newCharacter.pants_style as PantsStyle,
-              shoes_style: newCharacter.shoes_style as ShoesStyle,
-            });
-          }
-        } else {
-          setCharacter({
-            ...character,
-            body_type: character.body_type as BodyType,
-            hair_style: character.hair_style as HairStyle,
-            shirt_style: character.shirt_style as ShirtStyle,
-            pants_style: character.pants_style as PantsStyle,
-            shoes_style: character.shoes_style as ShoesStyle,
-          });
-        }
-      } catch (err) {
-        console.error('Error fetching character:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load character');
-      } finally {
-        setIsLoading(false);
-      }
+  const handleStyleChange = useCallback(async (category: SpriteCategory, style: string) => {
+    const key = category === 'body' ? 'body_type' : `${category}_style`;
+    const updatedCharacter = {
+      ...character,
+      [key]: style
     };
 
-    fetchCharacter();
-  }, [userId]);
-
-  const handleStyleChange = (category: SpriteCategory, value: string) => {
-    if (!character) return;
-
-    const field = `${category}_style` as keyof Character;
-    setCharacter(prev => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        [field]: value as BodyType | HairStyle | ShirtStyle | PantsStyle | ShoesStyle
-      };
-    });
-  };
-
-  const handleColorChange = (field: ColorField, color: string) => {
-    if (!character) return;
-    setCharacter(prev => prev ? {
-      ...prev,
-      [field]: color
-    } : null);
-  };
-
-  const handleSave = async () => {
-    if (!character) return;
-
-    try {
-      const { error: updateError } = await supabase
-        .from('characters')
-        .update({
-          body_type: character.body_type,
-          hair_style: character.hair_style,
-          hair_color: character.hair_color,
-          skin_color: character.skin_color,
-          eye_color: character.eye_color,
-          shirt_style: character.shirt_style,
-          shirt_color: character.shirt_color,
-          pants_style: character.pants_style,
-          pants_color: character.pants_color,
-          shoes_style: character.shoes_style,
-          shoes_color: character.shoes_color,
-          color_primary: character.color_primary,
-          color_secondary: character.color_secondary,
-          color_accent: character.color_accent,
-        })
-        .eq('id', character.id);
-
-      if (updateError) throw updateError;
-      onSave?.(character);
-    } catch (err) {
-      console.error('Error saving character:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save character');
+    if (onUpdate) {
+      onUpdate(updatedCharacter);
     }
+
+    await supabase
+      .from('characters')
+      .update({ [key]: style })
+      .eq('id', character.id);
+  }, [character, onUpdate, supabase]);
+
+  const handleColorChange = useCallback(async (category: SpriteCategory, color: string) => {
+    const key = category === 'body' ? 'skin_color' : `${category}_color`;
+    const updatedCharacter = {
+      ...character,
+      [key]: color
+    };
+
+    if (onUpdate) {
+      onUpdate(updatedCharacter);
+    }
+
+    await supabase
+      .from('characters')
+      .update({ [key]: color })
+      .eq('id', character.id);
+  }, [character, onUpdate, supabase]);
+
+  const getStyleValue = (category: SpriteCategory): string => {
+    return category === 'body' ? character.body_type : character[`${category}_style` as keyof Character] as string;
   };
 
-  if (isLoading) {
-    return (
-      <div className="text-center py-8">
-        <div className="text-gray-500">Loading character...</div>
-      </div>
-    );
-  }
-
-  if (error || !character) {
-    return (
-      <div className="bg-red-100 text-red-700 p-4 rounded-lg">
-        {error || 'Character not found'}
-      </div>
-    );
-  }
-
-  const colorFields: Array<{ label: string; field: ColorField }> = [
-    { label: 'Skin Color', field: 'skin_color' },
-    { label: 'Hair Color', field: 'hair_color' },
-    { label: 'Eye Color', field: 'eye_color' },
-    { label: 'Shirt Color', field: 'shirt_color' },
-    { label: 'Pants Color', field: 'pants_color' },
-    { label: 'Shoes Color', field: 'shoes_color' },
-  ];
+  const getColorValue = (category: SpriteCategory): string => {
+    return category === 'body' ? character.skin_color : character[`${category}_color` as keyof Character] as string;
+  };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {/* Character Preview */}
-      <div className="flex flex-col items-center">
-        <div className="bg-white p-8 rounded-lg shadow-lg">
-          <SpriteCharacter character={character} />
-        </div>
+    <div className="flex flex-col gap-6">
+      <div className="flex justify-center">
+        <CharacterSprite character={character} className="w-32 h-48" />
       </div>
 
-      {/* Customization Controls */}
-      <div className="space-y-6">
-        {/* Style Selectors */}
-        {Object.entries(SPRITE_CATEGORIES).map(([category, config]) => (
-          <div key={category} className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700 capitalize">
-              {category} Style
-            </label>
-            <select
-              value={character[`${category}_style` as keyof Character]}
-              onChange={(e) => handleStyleChange(category as SpriteCategory, e.target.value)}
-              className="input-field"
-            >
-              {config.options.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.name}
-                </option>
-              ))}
-            </select>
-          </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+        {Object.entries(SPRITE_CATEGORIES).map(([category, { name }]) => (
+          <button
+            key={category}
+            onClick={() => setSelectedCategory(category as SpriteCategory)}
+            className={`px-4 py-2 rounded ${
+              selectedCategory === category
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-100 hover:bg-gray-200'
+            }`}
+          >
+            {name}
+          </button>
         ))}
+      </div>
 
-        {/* Color Pickers */}
-        <div className="grid grid-cols-2 gap-4">
-          {colorFields.map(({ label, field }) => (
-            <div key={field} className="color-picker-wrapper">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {label}
-              </label>
-              <button
-                type="button"
-                onClick={() => setActiveColorPicker(activeColorPicker === field ? null : field)}
-                className="w-full h-8 rounded border border-gray-300"
-                style={{ backgroundColor: character[field] }}
-              />
-              {activeColorPicker === field && (
-                <>
-                  <div className="color-picker-popover">
-                    <HexColorPicker
-                      color={character[field]}
-                      onChange={(color) => handleColorChange(field, color)}
-                    />
-                  </div>
-                  <div
-                    className="color-picker-cover"
-                    onClick={() => setActiveColorPicker(null)}
-                  />
-                </>
-              )}
-            </div>
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+          {SPRITE_CATEGORIES[selectedCategory].options.map((option) => (
+            <button
+              key={option.id}
+              onClick={() => handleStyleChange(selectedCategory, option.id)}
+              className={`px-4 py-2 rounded ${
+                getStyleValue(selectedCategory) === option.id
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 hover:bg-gray-200'
+              }`}
+            >
+              {option.name}
+            </button>
           ))}
         </div>
 
-        {/* Save Button */}
-        <button
-          onClick={handleSave}
-          className="w-full btn-primary mt-6"
-        >
-          Save Changes
-        </button>
+        {SPRITE_CATEGORIES[selectedCategory].options[0].requiresColor && (
+          <div className="relative">
+            <button
+              onClick={() => setShowColorPicker(!showColorPicker)}
+              className="w-full h-10 rounded border"
+              style={{
+                backgroundColor: getColorValue(selectedCategory)
+              }}
+            />
+            {showColorPicker && (
+              <div className="absolute z-10 mt-2">
+                <HexColorPicker
+                  color={getColorValue(selectedCategory)}
+                  onChange={(color) => handleColorChange(selectedCategory, color)}
+                />
+                <div className="fixed inset-0 -z-10" onClick={() => setShowColorPicker(false)} />
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

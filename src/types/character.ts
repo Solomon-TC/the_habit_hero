@@ -92,12 +92,9 @@ export interface FriendWithProfile {
   bio: string | null;
   character_name: string | null;
   character_level: number | null;
-  character_experience: number | null;
-  character_next_level_exp: number | null;
   character_habits_completed: number | null;
   character_goals_completed: number | null;
   character_current_streak: number | null;
-  character_longest_streak: number | null;
   character_body_type: string | null;
   character_hair_style: string | null;
   character_hair_color: string | null;
@@ -109,3 +106,11 @@ export interface FriendWithProfile {
   character_shoes_style: string | null;
   character_shoes_color: string | null;
 }
+
+export const EXPERIENCE_REWARDS = {
+  COMPLETE_HABIT: 10,
+  COMPLETE_GOAL: 50,
+  DAILY_STREAK: 5,
+  WEEKLY_STREAK: 25,
+  MONTHLY_STREAK: 100
+} as const;
