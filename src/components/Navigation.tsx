@@ -12,7 +12,6 @@ export default function Navigation() {
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/habits', label: 'Habits' },
     { href: '/goals', label: 'Goals' },
-    { href: '/character', label: 'Character' },
     { href: '/friends', label: 'Friends' },
     { href: '/account', label: 'Account' },
   ];

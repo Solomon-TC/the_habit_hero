@@ -6,14 +6,12 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import HabitList from '../../components/HabitList';
 import GoalList from '../../components/GoalList';
-import CharacterDisplay from '../../components/CharacterDisplay';
 import DateDisplay from '../../components/DateDisplay';
 import HabitStats from '../../components/HabitStats';
 import type { Database } from '../../types/database';
 
 export default function DashboardPage() {
   const [userId, setUserId] = useState<string | null>(null);
-  const [hasCharacter, setHasCharacter] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -31,18 +29,6 @@ export default function DashboardPage() {
         }
         setUserId(user.id);
 
-        // Check if user has a character
-        const { data: character, error } = await supabase
-          .from('characters')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-
-        if (error && error.code !== 'PGRST116') {
-          throw error;
-        }
-
-        setHasCharacter(!!character);
       } catch (err) {
         console.error('Error checking character:', err);
       } finally {
@@ -85,28 +71,8 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Character Section */}
-          <div className="lg:col-span-1">
-            {hasCharacter ? (
-              <CharacterDisplay userId={userId} showAchievements={false} />
-            ) : (
-              <div className="bg-white rounded-lg shadow-lg p-6 text-center">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Create Your Character</h2>
-                <p className="text-gray-600 mb-6">
-                  Start your journey by creating a character that will grow with your achievements
-                </p>
-                <Link
-                  href="/character"
-                  className="inline-block bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors"
-                >
-                  Create Character
-                </Link>
-              </div>
-            )}
-          </div>
-
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="space-y-8">
             {/* Today's Habits */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <div className="flex justify-between items-center mb-6">

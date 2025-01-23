@@ -8,17 +8,6 @@ export interface FriendWithProfile {
   avatar_url: string | null;
   friend_code: string;
   bio: string | null;
-  character_name: string | null;
-  character_level: number | null;
-  character_experience: number | null;
-  character_next_level_exp: number | null;
-  character_color_primary: string | null;
-  character_color_secondary: string | null;
-  character_color_accent: string | null;
-  character_habits_completed: number | null;
-  character_goals_completed: number | null;
-  character_current_streak: number | null;
-  character_longest_streak: number | null;
 }
 
 export interface FriendRequestWithProfiles {

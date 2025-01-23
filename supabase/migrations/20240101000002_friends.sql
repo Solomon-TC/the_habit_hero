@@ -164,28 +164,6 @@ BEGIN
             (NEW.sender_id, NEW.receiver_id),
             (NEW.receiver_id, NEW.sender_id)
         ON CONFLICT DO NOTHING;
-        
-        -- Create achievement for both users
-        WITH user_characters AS (
-            SELECT id, user_id
-            FROM characters
-            WHERE user_id IN (NEW.sender_id, NEW.receiver_id)
-        )
-        INSERT INTO character_achievements (
-            character_id,
-            user_id,
-            type,
-            name,
-            description
-        )
-        SELECT 
-            uc.id,
-            uc.user_id,
-            'milestone',
-            'Made a New Friend',
-            'Connected with another habit hero on their journey'
-        FROM user_characters uc
-        ON CONFLICT DO NOTHING;
     END IF;
     
     RETURN NEW;
