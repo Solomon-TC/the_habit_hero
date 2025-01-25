@@ -175,7 +175,7 @@ export interface Database {
           user_id: string
           title: string
           description: string | null
-          frequency: string
+          frequency: 'daily' | 'weekly' | 'monthly'
           target_days: number[]
           reminder_time: string | null
           created_at: string
@@ -187,7 +187,7 @@ export interface Database {
           user_id: string
           title: string
           description?: string | null
-          frequency?: string
+          frequency?: 'daily' | 'weekly' | 'monthly'
           target_days?: number[]
           reminder_time?: string | null
           created_at?: string
@@ -199,7 +199,7 @@ export interface Database {
           user_id?: string
           title?: string
           description?: string | null
-          frequency?: string
+          frequency?: 'daily' | 'weekly' | 'monthly'
           target_days?: number[]
           reminder_time?: string | null
           created_at?: string
