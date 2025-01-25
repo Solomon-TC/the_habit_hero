@@ -1,5 +1,33 @@
--- Reset database script
--- This will safely drop all existing tables and recreate them
+-- Combined migrations file
+-- This file contains all migrations in order
+
+-- Drop existing policies
+DROP POLICY IF EXISTS "Users can view all profiles" ON profiles;
+DROP POLICY IF EXISTS "Users can insert their own profile" ON profiles;
+DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
+DROP POLICY IF EXISTS "Users can view their own habits" ON habits;
+DROP POLICY IF EXISTS "Users can insert their own habits" ON habits;
+DROP POLICY IF EXISTS "Users can update their own habits" ON habits;
+DROP POLICY IF EXISTS "Users can delete their own habits" ON habits;
+DROP POLICY IF EXISTS "Users can view their own habit completions" ON habit_completions;
+DROP POLICY IF EXISTS "Users can insert their own habit completions" ON habit_completions;
+DROP POLICY IF EXISTS "Users can update their own habit completions" ON habit_completions;
+DROP POLICY IF EXISTS "Users can delete their own habit completions" ON habit_completions;
+DROP POLICY IF EXISTS "Users can view their own goals" ON goals;
+DROP POLICY IF EXISTS "Users can insert their own goals" ON goals;
+DROP POLICY IF EXISTS "Users can update their own goals" ON goals;
+DROP POLICY IF EXISTS "Users can delete their own goals" ON goals;
+DROP POLICY IF EXISTS "Users can view their own goal milestones" ON goal_milestones;
+DROP POLICY IF EXISTS "Users can insert their own goal milestones" ON goal_milestones;
+DROP POLICY IF EXISTS "Users can update their own goal milestones" ON goal_milestones;
+DROP POLICY IF EXISTS "Users can delete their own goal milestones" ON goal_milestones;
+DROP POLICY IF EXISTS "Users can view friend requests they're involved in" ON friend_requests;
+DROP POLICY IF EXISTS "Users can send friend requests" ON friend_requests;
+DROP POLICY IF EXISTS "Users can update friend requests they're involved in" ON friend_requests;
+DROP POLICY IF EXISTS "Users can delete friend requests they're involved in" ON friend_requests;
+DROP POLICY IF EXISTS "Users can view their friends" ON friends;
+DROP POLICY IF EXISTS "Users can add friends" ON friends;
+DROP POLICY IF EXISTS "Users can remove friends" ON friends;
 
 -- Drop existing tables in reverse order of dependencies
 DROP TABLE IF EXISTS friend_requests CASCADE;
@@ -21,11 +49,17 @@ DROP FUNCTION IF EXISTS set_completion_date CASCADE;
 DROP TRIGGER IF EXISTS friend_request_accepted ON friend_requests;
 DROP TRIGGER IF EXISTS update_friend_requests_updated_at ON friend_requests;
 DROP TRIGGER IF EXISTS update_profiles_updated_at ON profiles;
+DROP TRIGGER IF EXISTS update_habits_updated_at ON habits;
+DROP TRIGGER IF EXISTS update_goals_updated_at ON goals;
+DROP TRIGGER IF EXISTS update_goal_milestones_updated_at ON goal_milestones;
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 DROP TRIGGER IF EXISTS set_completion_date_trigger ON habit_completions;
 
--- Initial Schema
--- Create profiles table
+-- Drop existing views
+DROP VIEW IF EXISTS friends_with_profiles CASCADE;
+DROP VIEW IF EXISTS friend_requests_with_profiles CASCADE;
+
+-- Initial schema with profiles table
 CREATE TABLE IF NOT EXISTS profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     username TEXT UNIQUE NOT NULL,
@@ -37,18 +71,108 @@ CREATE TABLE IF NOT EXISTS profiles (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
 
+-- Function to generate random friend code
+CREATE OR REPLACE FUNCTION generate_friend_code()
+RETURNS TEXT AS $$
+DECLARE
+    chars TEXT := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    result TEXT := '';
+    i INTEGER;
+BEGIN
+    -- Generate an 8-character code (e.g., 'HB4K9XY2')
+    FOR i IN 1..8 LOOP
+        result := result || substr(chars, floor(random() * length(chars) + 1)::integer, 1);
+    END LOOP;
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to handle new user creation
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    new_friend_code TEXT;
+BEGIN
+    -- Generate a unique friend code
+    LOOP
+        new_friend_code := generate_friend_code();
+        EXIT WHEN NOT EXISTS (SELECT 1 FROM profiles WHERE friend_code = new_friend_code);
+    END LOOP;
+
+    -- Create new profile
+    INSERT INTO public.profiles (id, username, display_name, friend_code)
+    VALUES (
+        NEW.id,
+        LOWER(SPLIT_PART(NEW.email, '@', 1)),
+        SPLIT_PART(NEW.email, '@', 1),
+        new_friend_code
+    );
+
+    RETURN NEW;
+END;
+$$;
+
+-- Function to update timestamps
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = TIMEZONE('utc', NOW());
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger for new user profile creation
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION handle_new_user();
+
+-- Create trigger for updating profile timestamps
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON profiles;
+CREATE TRIGGER update_profiles_updated_at
+    BEFORE UPDATE ON profiles
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Enable Row Level Security for profiles
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for profiles table
+CREATE POLICY "Users can view all profiles"
+    ON profiles FOR SELECT
+    TO authenticated
+    USING (true);
+
+CREATE POLICY "Users can insert their own profile"
+    ON profiles FOR INSERT
+    WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can update their own profile"
+    ON profiles FOR UPDATE
+    USING (auth.uid() = id);
+
+-- Create indexes for profiles
+CREATE INDEX IF NOT EXISTS profiles_username_idx ON profiles(username);
+CREATE INDEX IF NOT EXISTS profiles_friend_code_idx ON profiles(friend_code);
+
 -- Create habits table
 CREATE TABLE IF NOT EXISTS habits (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
+    title TEXT NOT NULL,
     description TEXT,
     frequency TEXT NOT NULL CHECK (frequency IN ('daily', 'weekly', 'monthly')),
     target_days INTEGER[] NOT NULL CHECK (array_length(target_days, 1) > 0),
     reminder_time TIME,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
     archived_at TIMESTAMP WITH TIME ZONE,
-    UNIQUE (user_id, name)
+    UNIQUE (user_id, title)
 );
 
 -- Create habit completions table
@@ -61,7 +185,7 @@ CREATE TABLE IF NOT EXISTS habit_completions (
     UNIQUE (habit_id, completion_date)
 );
 
--- Create function to set completion_date from completed_at
+-- Function to set completion_date from completed_at
 CREATE OR REPLACE FUNCTION set_completion_date()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -76,17 +200,24 @@ CREATE TRIGGER set_completion_date_trigger
     FOR EACH ROW
     EXECUTE FUNCTION set_completion_date();
 
--- Create indexes for better query performance
+-- Create trigger for updating habit timestamps
+DROP TRIGGER IF EXISTS update_habits_updated_at ON habits;
+CREATE TRIGGER update_habits_updated_at
+    BEFORE UPDATE ON habits
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Create indexes for habits
 CREATE INDEX IF NOT EXISTS habits_user_id_idx ON habits(user_id);
+CREATE INDEX IF NOT EXISTS habits_archived_at_idx ON habits(archived_at);
 CREATE INDEX IF NOT EXISTS habit_completions_user_id_idx ON habit_completions(user_id);
 CREATE INDEX IF NOT EXISTS habit_completions_habit_id_idx ON habit_completions(habit_id);
 CREATE INDEX IF NOT EXISTS habit_completions_completed_at_idx ON habit_completions(completed_at);
 CREATE INDEX IF NOT EXISTS habit_completions_completion_date_idx ON habit_completions(completion_date);
 
--- Set up Row Level Security (RLS)
+-- Enable Row Level Security for habits
 ALTER TABLE habits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE habit_completions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for habits table
 CREATE POLICY "Users can view their own habits"
@@ -124,33 +255,19 @@ CREATE POLICY "Users can delete their own habit completions"
     ON habit_completions FOR DELETE
     USING (auth.uid() = user_id);
 
--- Create policies for profiles table
-CREATE POLICY "Users can view all profiles"
-    ON profiles FOR SELECT
-    TO authenticated
-    USING (true);
-
-CREATE POLICY "Users can insert their own profile"
-    ON profiles FOR INSERT
-    WITH CHECK (auth.uid() = id);
-
-CREATE POLICY "Users can update their own profile"
-    ON profiles FOR UPDATE
-    USING (auth.uid() = id);
-
--- Goals Tables
 -- Create goals table
 CREATE TABLE IF NOT EXISTS goals (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
+    title TEXT NOT NULL,
     description TEXT,
     target_date DATE NOT NULL,
     status TEXT NOT NULL CHECK (status IN ('not_started', 'in_progress', 'completed', 'archived')),
     progress INTEGER NOT NULL DEFAULT 0 CHECK (progress >= 0 AND progress <= 100),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
     completed_at TIMESTAMP WITH TIME ZONE,
-    UNIQUE (user_id, name)
+    UNIQUE (user_id, title)
 );
 
 -- Create goal milestones table
@@ -158,21 +275,37 @@ CREATE TABLE IF NOT EXISTS goal_milestones (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     goal_id UUID NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
+    title TEXT NOT NULL,
     description TEXT,
     completed BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
     completed_at TIMESTAMP WITH TIME ZONE,
-    UNIQUE (goal_id, name)
+    UNIQUE (goal_id, title)
 );
 
--- Create indexes for better query performance
+-- Create triggers for updating goal timestamps
+DROP TRIGGER IF EXISTS update_goals_updated_at ON goals;
+CREATE TRIGGER update_goals_updated_at
+    BEFORE UPDATE ON goals
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_goal_milestones_updated_at ON goal_milestones;
+CREATE TRIGGER update_goal_milestones_updated_at
+    BEFORE UPDATE ON goal_milestones
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Create indexes for goals
 CREATE INDEX IF NOT EXISTS goals_user_id_idx ON goals(user_id);
 CREATE INDEX IF NOT EXISTS goals_status_idx ON goals(status);
+CREATE INDEX IF NOT EXISTS goals_target_date_idx ON goals(target_date);
 CREATE INDEX IF NOT EXISTS goal_milestones_goal_id_idx ON goal_milestones(goal_id);
 CREATE INDEX IF NOT EXISTS goal_milestones_user_id_idx ON goal_milestones(user_id);
+CREATE INDEX IF NOT EXISTS goal_milestones_completed_idx ON goal_milestones(completed);
 
--- Set up Row Level Security (RLS)
+-- Enable Row Level Security for goals
 ALTER TABLE goals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE goal_milestones ENABLE ROW LEVEL SECURITY;
 
@@ -211,45 +344,6 @@ CREATE POLICY "Users can update their own goal milestones"
 CREATE POLICY "Users can delete their own goal milestones"
     ON goal_milestones FOR DELETE
     USING (auth.uid() = user_id);
-
--- Friends System
--- Create function to generate random friend code
-CREATE OR REPLACE FUNCTION generate_friend_code()
-RETURNS TEXT AS $$
-DECLARE
-    chars TEXT := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    result TEXT := '';
-    i INTEGER;
-BEGIN
-    -- Generate an 8-character code (e.g., 'HB4K9XY2')
-    FOR i IN 1..8 LOOP
-        result := result || substr(chars, floor(random() * length(chars) + 1)::integer, 1);
-    END LOOP;
-    RETURN result;
-END;
-$$ LANGUAGE plpgsql;
-
--- Generate friend codes for existing profiles that don't have one
-DO $$
-DECLARE
-    profile_record RECORD;
-    new_friend_code TEXT;
-BEGIN
-    FOR profile_record IN SELECT id FROM profiles WHERE friend_code IS NULL LOOP
-        -- Generate a unique friend code
-        LOOP
-            new_friend_code := generate_friend_code();
-            EXIT WHEN NOT EXISTS (
-                SELECT 1 FROM profiles WHERE friend_code = new_friend_code
-            );
-        END LOOP;
-
-        -- Update the profile with the new friend code
-        UPDATE profiles 
-        SET friend_code = new_friend_code 
-        WHERE id = profile_record.id;
-    END LOOP;
-END $$;
 
 -- Create friend requests table
 CREATE TABLE IF NOT EXISTS friend_requests (
@@ -309,15 +403,48 @@ FROM friend_requests fr
 JOIN profiles sp ON fr.sender_id = sp.id
 JOIN profiles rp ON fr.receiver_id = rp.id;
 
--- Create indexes for better query performance
+-- Function to handle friend request acceptance
+CREATE OR REPLACE FUNCTION handle_friend_request_acceptance()
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    IF NEW.status = 'accepted' AND OLD.status = 'pending' THEN
+        -- Create friendship records (bidirectional)
+        INSERT INTO friends (user_id, friend_id)
+        VALUES 
+            (NEW.sender_id, NEW.receiver_id),
+            (NEW.receiver_id, NEW.sender_id)
+        ON CONFLICT DO NOTHING;
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger for friend request acceptance
+DROP TRIGGER IF EXISTS on_friend_request_acceptance ON friend_requests;
+CREATE TRIGGER on_friend_request_acceptance
+    AFTER UPDATE OF status ON friend_requests
+    FOR EACH ROW
+    EXECUTE FUNCTION handle_friend_request_acceptance();
+
+-- Create trigger for updating friend request timestamps
+DROP TRIGGER IF EXISTS update_friend_requests_updated_at ON friend_requests;
+CREATE TRIGGER update_friend_requests_updated_at
+    BEFORE UPDATE ON friend_requests
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Create indexes for friends
 CREATE INDEX IF NOT EXISTS friend_requests_sender_id_idx ON friend_requests(sender_id);
 CREATE INDEX IF NOT EXISTS friend_requests_receiver_id_idx ON friend_requests(receiver_id);
+CREATE INDEX IF NOT EXISTS friend_requests_status_idx ON friend_requests(status);
 CREATE INDEX IF NOT EXISTS friends_user_id_idx ON friends(user_id);
 CREATE INDEX IF NOT EXISTS friends_friend_id_idx ON friends(friend_id);
-CREATE INDEX IF NOT EXISTS profiles_username_idx ON profiles(username);
-CREATE INDEX IF NOT EXISTS profiles_friend_code_idx ON profiles(friend_code);
 
--- Enable Row Level Security
+-- Enable Row Level Security for friends
 ALTER TABLE friend_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE friends ENABLE ROW LEVEL SECURITY;
 
@@ -352,127 +479,7 @@ CREATE POLICY "Users can remove friends"
     ON friends FOR DELETE
     USING (auth.uid() = user_id OR auth.uid() = friend_id);
 
--- Function to handle friend request acceptance
-CREATE OR REPLACE FUNCTION handle_friend_request_acceptance()
-RETURNS TRIGGER
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-    IF NEW.status = 'accepted' AND OLD.status = 'pending' THEN
-        -- Create friendship records (bidirectional)
-        INSERT INTO friends (user_id, friend_id)
-        VALUES 
-            (NEW.sender_id, NEW.receiver_id),
-            (NEW.receiver_id, NEW.sender_id)
-        ON CONFLICT DO NOTHING;
-    END IF;
-    
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Create trigger for friend request acceptance
-DROP TRIGGER IF EXISTS on_friend_request_acceptance ON friend_requests;
-CREATE TRIGGER on_friend_request_acceptance
-    AFTER UPDATE OF status ON friend_requests
-    FOR EACH ROW
-    EXECUTE FUNCTION handle_friend_request_acceptance();
-
--- Function to update timestamps
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = TIMEZONE('utc', NOW());
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Create triggers for updating timestamps
-DROP TRIGGER IF EXISTS update_friend_requests_updated_at ON friend_requests;
-CREATE TRIGGER update_friend_requests_updated_at
-    BEFORE UPDATE ON friend_requests
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
-
-DROP TRIGGER IF EXISTS update_profiles_updated_at ON profiles;
-CREATE TRIGGER update_profiles_updated_at
-    BEFORE UPDATE ON profiles
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Update handle_new_user function to include friend_code
-CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER
-SECURITY DEFINER
-SET search_path = public
-LANGUAGE plpgsql
-AS $$
-DECLARE
-    new_friend_code TEXT;
-BEGIN
-    -- Generate a unique friend code
-    LOOP
-        new_friend_code := generate_friend_code();
-        EXIT WHEN NOT EXISTS (SELECT 1 FROM profiles WHERE friend_code = new_friend_code);
-    END LOOP;
-
-    -- Update existing profile or create new one
-    INSERT INTO public.profiles (id, username, display_name, friend_code)
-    VALUES (
-        NEW.id,
-        LOWER(SPLIT_PART(NEW.email, '@', 1)),
-        SPLIT_PART(NEW.email, '@', 1),
-        new_friend_code
-    )
-    ON CONFLICT (id) DO UPDATE
-    SET friend_code = EXCLUDED.friend_code
-    WHERE profiles.friend_code IS NULL;
-
-    RETURN NEW;
-END;
-$$;
-
--- Recreate trigger for new user profile creation
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW
-    EXECUTE FUNCTION handle_new_user();
-
--- Update habits schema
-ALTER TABLE habits 
-  -- Update frequency to include monthly
-  DROP CONSTRAINT habits_frequency_check,
-  ADD CONSTRAINT habits_frequency_check 
-    CHECK (frequency IN ('daily', 'weekly', 'monthly')),
-  
-  -- Change target_days to array
-  ALTER COLUMN target_days TYPE INTEGER[] USING ARRAY[target_days],
-  DROP CONSTRAINT habits_target_days_check,
-  ADD CONSTRAINT habits_target_days_check 
-    CHECK (array_length(target_days, 1) > 0),
-
-  -- Replace archived boolean with timestamp
-  DROP COLUMN archived,
-  ADD COLUMN archived_at TIMESTAMP WITH TIME ZONE;
-
--- Update habit_completions table
-ALTER TABLE habit_completions
-  -- Remove date column since we're using completed_at
-  DROP COLUMN date,
-  -- Remove unique constraint that used date
-  DROP CONSTRAINT habit_completions_habit_id_date_key,
-  -- Add new constraint using completed_at date part
-  ADD CONSTRAINT habit_completions_habit_id_date_key 
-    UNIQUE (habit_id, (DATE(completed_at)));
-
--- Drop old index and create new one
-DROP INDEX IF EXISTS habit_completions_date_idx;
-CREATE INDEX IF NOT EXISTS habit_completions_completed_at_idx 
-  ON habit_completions(completed_at);
-
--- Grant permissions to public schema
+-- Grant permissions
 GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres, anon, authenticated, service_role;
