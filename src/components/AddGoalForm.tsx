@@ -63,9 +63,9 @@ export default function AddGoalForm({ onGoalAdded }: Props) {
         .from('goals')
         .insert({
           user_id: user.id,
-          name,
+          title: name,
           description: description || null,
-          target_date: targetDate,
+          due_date: targetDate,
           status: 'not_started',
           progress: 0,
         })
@@ -82,7 +82,7 @@ export default function AddGoalForm({ onGoalAdded }: Props) {
             milestones.map(milestone => ({
               goal_id: goalData.id,
               user_id: user.id,
-              name: milestone.name,
+              title: milestone.name,
               description: milestone.description || null,
               completed: false,
             }))

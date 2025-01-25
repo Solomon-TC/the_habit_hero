@@ -15,12 +15,12 @@ export default function EditGoalForm({ goal, onClose, onGoalUpdated }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [name, setName] = useState(goal.name);
+  const [name, setName] = useState(goal.title);
   const [description, setDescription] = useState(goal.description || '');
-  const [targetDate, setTargetDate] = useState(goal.target_date);
+  const [targetDate, setTargetDate] = useState(goal.due_date);
   const [milestones, setMilestones] = useState<{ name: string; description?: string }[]>(
     goal.milestones.map(m => ({
-      name: m.name,
+      name: m.title,
       description: m.description || undefined,
     }))
   );
@@ -63,9 +63,9 @@ export default function EditGoalForm({ goal, onClose, onGoalUpdated }: Props) {
       const { error: goalError } = await supabase
         .from('goals')
         .update({
-          name,
+          title: name,
           description: description || null,
-          target_date: targetDate,
+          due_date: targetDate,
         })
         .eq('id', goal.id);
 
@@ -87,7 +87,7 @@ export default function EditGoalForm({ goal, onClose, onGoalUpdated }: Props) {
             milestones.map(milestone => ({
               goal_id: goal.id,
               user_id: user.id,
-              name: milestone.name,
+              title: milestone.name,
               description: milestone.description || null,
               completed: false,
             }))

@@ -92,6 +92,7 @@ export interface Database {
           id: string
           goal_id: string
           title: string
+          description: string | null
           completed: boolean
           created_at: string
           updated_at: string
@@ -100,6 +101,7 @@ export interface Database {
           id?: string
           goal_id: string
           title: string
+          description?: string | null
           completed?: boolean
           created_at?: string
           updated_at?: string
@@ -108,6 +110,7 @@ export interface Database {
           id?: string
           goal_id?: string
           title?: string
+          description?: string | null
           completed?: boolean
           created_at?: string
           updated_at?: string
