@@ -176,10 +176,11 @@ export interface Database {
           title: string
           description: string | null
           frequency: string
-          completed_today: boolean
-          streak: number
+          target_days: number[]
+          reminder_time: string | null
           created_at: string
           updated_at: string
+          archived_at: string | null
         }
         Insert: {
           id?: string
@@ -187,10 +188,11 @@ export interface Database {
           title: string
           description?: string | null
           frequency?: string
-          completed_today?: boolean
-          streak?: number
+          target_days?: number[]
+          reminder_time?: string | null
           created_at?: string
           updated_at?: string
+          archived_at?: string | null
         }
         Update: {
           id?: string
@@ -198,10 +200,11 @@ export interface Database {
           title?: string
           description?: string | null
           frequency?: string
-          completed_today?: boolean
-          streak?: number
+          target_days?: number[]
+          reminder_time?: string | null
           created_at?: string
           updated_at?: string
+          archived_at?: string | null
         }
         Relationships: [
           {

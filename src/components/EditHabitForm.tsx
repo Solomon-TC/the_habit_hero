@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '../types/database';
-import type { Habit } from '../types/database';
+
+type Habit = Database['public']['Tables']['habits']['Row'];
+type HabitFrequency = 'daily' | 'weekly' | 'monthly';
 
 type Props = {
   habit: Habit;
@@ -15,9 +17,9 @@ export default function EditHabitForm({ habit, onClose, onHabitUpdated }: Props)
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [name, setName] = useState(habit.name);
+  const [name, setName] = useState(habit.title);
   const [description, setDescription] = useState(habit.description || '');
-  const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly'>(habit.frequency);
+  const [frequency, setFrequency] = useState<HabitFrequency>(habit.frequency as HabitFrequency);
   const [targetDays, setTargetDays] = useState<number[]>(habit.target_days);
   const [reminderTime, setReminderTime] = useState(habit.reminder_time || '');
 
@@ -35,7 +37,7 @@ export default function EditHabitForm({ habit, onClose, onHabitUpdated }: Props)
       const { error: updateError } = await supabase
         .from('habits')
         .update({
-          name,
+          title: name,
           description: description || null,
           frequency,
           target_days: targetDays,

@@ -37,7 +37,7 @@ export default function AddHabitForm({ onHabitAdded }: Props) {
         .from('habits')
         .insert({
           user_id: user.id,
-          name,
+          title: name,
           description: description || null,
           frequency,
           target_days: targetDays,
