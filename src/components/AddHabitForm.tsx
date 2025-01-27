@@ -13,7 +13,7 @@ export default function AddHabitForm({ onHabitAdded }: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [name, setName] = useState('');
+  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [targetDays, setTargetDays] = useState<number[]>([1]);
@@ -37,7 +37,7 @@ export default function AddHabitForm({ onHabitAdded }: Props) {
         .from('habits')
         .insert({
           user_id: user.id,
-          title: name,
+          title,
           description: description || null,
           frequency,
           target_days: targetDays,
@@ -47,7 +47,7 @@ export default function AddHabitForm({ onHabitAdded }: Props) {
       if (insertError) throw insertError;
 
       // Reset form
-      setName('');
+      setTitle('');
       setDescription('');
       setFrequency('daily');
       setTargetDays([1]);
@@ -148,14 +148,14 @@ export default function AddHabitForm({ onHabitAdded }: Props) {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="title" className="block text-sm font-medium text-gray-700">
             Habit Name *
           </label>
           <input
             type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            id="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             required
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
             placeholder="e.g., Morning Meditation"
