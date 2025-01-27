@@ -169,6 +169,45 @@ export interface Database {
           }
         ]
       }
+      habit_completions: {
+        Row: {
+          id: string
+          habit_id: string
+          user_id: string
+          completed_at: string
+          completion_date: string
+        }
+        Insert: {
+          id?: string
+          habit_id: string
+          user_id: string
+          completed_at?: string
+          completion_date?: string
+        }
+        Update: {
+          id?: string
+          habit_id?: string
+          user_id?: string
+          completed_at?: string
+          completion_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_completions_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "habit_completions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       habits: {
         Row: {
           id: string

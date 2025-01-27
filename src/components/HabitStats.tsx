@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '../types/database';
-import type { Habit, HabitCompletion } from '../types/database';
+type Habit = Database['public']['Tables']['habits']['Row'];
+type HabitCompletion = Database['public']['Tables']['habit_completions']['Row'];
 
-type HabitWithCompletions = Habit & {
-  completions: HabitCompletion[];
-};
+interface HabitWithCompletions extends Habit {
+  habit_completions: HabitCompletion[];
+}
 
 export default function HabitStats() {
   const [stats, setStats] = useState({
@@ -33,17 +34,22 @@ export default function HabitStats() {
         // Get active habits with their completions
         const { data: habits, error: habitsError } = await supabase
           .from('habits')
-          .select('*, completions:habit_completions(*)')
-          .is('archived_at', null);
+          .select('*, habit_completions(*)')
+          .is('archived_at', null)
+          .eq('user_id', user.id);
 
         if (habitsError) throw habitsError;
 
+        const habitsWithCompletions = (habits || []).map(habit => ({
+          ...habit,
+          habit_completions: (habit.habit_completions as HabitCompletion[]) || []
+        })) as HabitWithCompletions[];
+
         // Calculate completions for today based on habit frequency
         let completedToday = 0;
-        const habitsWithCompletions = habits as HabitWithCompletions[];
 
         habitsWithCompletions.forEach(habit => {
-          const todayCompletions = habit.completions.filter(c => 
+          const todayCompletions = habit.habit_completions.filter(c => 
             new Date(c.completed_at).toISOString().split('T')[0] === today
           );
 
@@ -79,7 +85,7 @@ export default function HabitStats() {
 
           // Check each habit's completions for this date
           for (const habit of habitsWithCompletions) {
-            const dateCompletions = habit.completions.filter(c => 
+            const dateCompletions = habit.habit_completions.filter(c => 
               new Date(c.completed_at).toISOString().split('T')[0] === dateStr
             );
 
