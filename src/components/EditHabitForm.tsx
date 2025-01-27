@@ -17,7 +17,7 @@ export default function EditHabitForm({ habit, onClose, onHabitUpdated }: Props)
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [name, setName] = useState(habit.title);
+  const [title, setTitle] = useState(habit.title);
   const [description, setDescription] = useState(habit.description || '');
   const [frequency, setFrequency] = useState<HabitFrequency>(habit.frequency as HabitFrequency);
   const [targetDays, setTargetDays] = useState<number[]>(habit.target_days);
@@ -34,15 +34,17 @@ export default function EditHabitForm({ habit, onClose, onHabitUpdated }: Props)
     setError(null);
 
     try {
+      const habitData: Database['public']['Tables']['habits']['Update'] = {
+        title,
+        description: description || null,
+        frequency,
+        target_days: targetDays,
+        reminder_time: reminderTime || null,
+      };
+
       const { error: updateError } = await supabase
         .from('habits')
-        .update({
-          title: name,
-          description: description || null,
-          frequency,
-          target_days: targetDays,
-          reminder_time: reminderTime || null,
-        })
+        .update(habitData)
         .eq('id', habit.id);
 
       if (updateError) throw updateError;
@@ -140,8 +142,8 @@ export default function EditHabitForm({ habit, onClose, onHabitUpdated }: Props)
               <input
                 type="text"
                 id="title"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
                 required
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
                 placeholder="e.g., Morning Meditation"

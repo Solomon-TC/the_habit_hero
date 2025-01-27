@@ -33,16 +33,18 @@ export default function AddHabitForm({ onHabitAdded }: Props) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      const habitData: Database['public']['Tables']['habits']['Insert'] = {
+        user_id: user.id,
+        title,
+        description: description || null,
+        frequency,
+        target_days: targetDays,
+        reminder_time: reminderTime || null,
+      };
+
       const { error: insertError } = await supabase
         .from('habits')
-        .insert({
-          user_id: user.id,
-          title,
-          description: description || null,
-          frequency,
-          target_days: targetDays,
-          reminder_time: reminderTime || null,
-        });
+        .insert(habitData);
 
       if (insertError) throw insertError;
 
