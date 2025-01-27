@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '../types/database';
-import type { Habit, HabitCompletion } from '../types/database';
+type Habit = Database['public']['Tables']['habits']['Row'];
+type HabitCompletion = Database['public']['Tables']['habit_completions']['Row'];
 import EditHabitForm from './EditHabitForm';
 
-type HabitWithCompletions = Habit & {
-  completions: HabitCompletion[];
-};
+interface HabitWithCompletions extends Habit {
+  habit_completions: HabitCompletion[];
+}
 
 export default function HabitList() {
   const [habits, setHabits] = useState<HabitWithCompletions[]>([]);
@@ -29,31 +30,25 @@ export default function HabitList() {
       // Get today's date in YYYY-MM-DD format
       const today = new Date().toISOString().split('T')[0];
 
-      // Fetch habits
-      const { data: habitsData, error: habitsError } = await supabase
+      // Fetch habits with their completions
+      const { data: habits, error: habitsError } = await supabase
         .from('habits')
-        .select('*')
-        .eq('user_id', user.id)  // Add this line to filter by user_id
+        .select(`
+          *,
+          habit_completions(*)
+        `)
+        .eq('user_id', user.id)
         .is('archived_at', null)
         .order('created_at', { ascending: false });
 
       if (habitsError) throw habitsError;
 
-      // Fetch today's completions for these habits
-      const { data: completionsData, error: completionsError } = await supabase
-        .from('habit_completions')
-        .select('*')
-        .eq('user_id', user.id)  // Add this line to filter by user_id
-        .eq('completion_date', today)  // Use completion_date instead of completed_at range
-        .in('habit_id', habitsData.map(h => h.id));
-
-      if (completionsError) throw completionsError;
-
-      // Combine habits with their completions
-      const habitsWithCompletions = habitsData.map(habit => ({
+      // Filter completions to only include today's completions
+      const habitsWithCompletions = (habits || []).map(habit => ({
         ...habit,
-        completions: completionsData.filter(c => c.habit_id === habit.id)
-      }));
+        habit_completions: ((habit.habit_completions || []) as HabitCompletion[])
+          .filter(c => c.completion_date === today)
+      })) as HabitWithCompletions[];
 
       setHabits(habitsWithCompletions);
     } catch (err) {
@@ -75,7 +70,7 @@ export default function HabitList() {
 
       const today = new Date().toISOString();
       const todayDate = today.split('T')[0];
-      const isCompleted = habit.completions.some(c => c.completion_date === todayDate);
+      const isCompleted = habit.habit_completions.some(c => c.completion_date === todayDate);
 
       if (isCompleted) {
         // Remove completion
@@ -146,7 +141,7 @@ export default function HabitList() {
           <div className="flex-1">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="font-medium text-gray-900">{habit.name}</h3>
+                <h3 className="font-medium text-gray-900">{habit.title}</h3>
                 {habit.description && (
                   <p className="text-sm text-gray-500 mt-1">{habit.description}</p>
                 )}
@@ -167,12 +162,12 @@ export default function HabitList() {
           <button
             onClick={() => toggleHabitCompletion(habit)}
             className={`ml-4 h-6 w-6 rounded-full border-2 transition-colors ${
-              habit.completions.length > 0
+              habit.habit_completions.length > 0
                 ? 'bg-primary border-primary text-white'
                 : 'border-gray-300 hover:border-primary'
             }`}
           >
-            {habit.completions.length > 0 && '✓'}
+            {habit.habit_completions.length > 0 && '✓'}
           </button>
         </div>
       ))}
